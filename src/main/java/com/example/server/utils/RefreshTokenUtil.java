@@ -5,9 +5,12 @@ import com.example.server.entities.UserEntity;
 import com.example.server.repositories.RefreshTokenRepository;
 import com.example.server.repositories.UserEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -23,12 +26,16 @@ public class RefreshTokenUtil {
 	}
 
 	public static RefreshToken createRefreshToken(UserEntity user){
-		RefreshToken refreshToken = RefreshToken.builder()
-				.userEntity(user)
-				.token(UUID.randomUUID().toString())
-				.expiryDate(Instant.now().plusMillis(86_400_000))
-				.build();
-		return refreshTokenRepository.save(refreshToken);
+		Optional<RefreshToken> refreshTokenExists = refreshTokenRepository.findByUserEntity(user);
+		if(refreshTokenExists.isEmpty()){
+			RefreshToken refreshToken = RefreshToken.builder()
+					.userEntity(user)
+					.token(UUID.randomUUID().toString())
+					.expiryDate(Instant.now().plusMillis(86_400_000))
+					.build();
+			return refreshTokenRepository.save(refreshToken);
+		}
+		return refreshTokenExists.get();
 	}
 
 	public static RefreshToken verifyExpiration(String token){

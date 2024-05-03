@@ -3,4 +3,8 @@ package com.example.server.repositories;
 import com.example.server.entities.UserEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface UserEntityRepository extends CrudRepository<UserEntity, Long> { }
+import java.util.Optional;
+
+public interface UserEntityRepository extends CrudRepository<UserEntity, Long> {
+	Optional<UserEntity> findByEmail(String email);
+}

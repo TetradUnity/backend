@@ -28,6 +28,17 @@ public class AuthController {
 
 	private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
+	@GetMapping("create-admin")
+	public ResponseEntity<Object> method(){
+		UserEntity user = new UserEntity("maksimmankovskiy04@gmail.com",
+				passwordEncoder.encode("qwerty")
+				, "Maks", "Mankov", Role.chief_teacher);
+		userRepository.save(user);
+		Map<String, Object> response = new HashMap<>();
+		response.put("ok", true);
+		return ResponseEntity.ok().body(response);
+	}
+
 	@PostMapping("/refresh-authorized")
 	public ResponseEntity<Object> refreshAuthorized(HttpServletRequest req){
 		UserWithTokens userWithTokens = AuthUtil.refreshAuthorizedUser(req);

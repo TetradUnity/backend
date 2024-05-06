@@ -4,13 +4,12 @@ import com.example.server.entities.UserEntity;
 import com.example.server.models.EditedUser;
 import com.example.server.models.Role;
 import com.example.server.models.User;
-import com.example.server.repositories.UserEntityRepository;
+import com.example.server.repositories.UserRepository;
 import com.example.server.services.CheckValidDataService;
 import com.example.server.services.ResponseService;
 import com.example.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,24 +19,38 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-public class ActionController {
+@RequestMapping("/user")
+public class UserController {
 
 	@Autowired
-	UserEntityRepository userEntityRepository;
+	UserRepository userRepository;
 
 	private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
-	@GetMapping("/profile")
-	public ResponseEntity<Object> getInfo(HttpServletRequest req){
+	@GetMapping("/get")
+	public ResponseEntity<Object> getInfo(HttpServletRequest req,
+										  @RequestParam(name = "id", required = false, defaultValue = "0") long id){
 		UserEntity user = AuthUtil.authorizedUser(req);
 
 		if(user == null){
 			return ResponseService.unauthorized();
 		}
 
-		return ResponseEntity.ok().body(new User(user));
+		Map<String, Object> response = new HashMap<>();
+
+		if(id != 0){
+			user = userRepository.findById(id).orElse(null);
+			if(user == null){
+				return ResponseService.failed();
+			}
+		}
+
+		response.put("ok", true);
+		response.put("user", new User(user));
+
+		return ResponseEntity.ok().body(response);
 	}
-	@DeleteMapping("/delete-user")
+	@DeleteMapping("/delete")
 	public ResponseEntity<Object> deleteUser(HttpServletRequest req, @RequestBody UserEntity userEmail){
 		UserEntity user = AuthUtil.authorizedUser(req);
 
@@ -46,7 +59,7 @@ public class ActionController {
 		}
 
 		String email = userEmail.getEmail();
-		UserEntity userInfo = (userEntityRepository.findByEmail(email)).orElse(null);
+		UserEntity userInfo = (userRepository.findByEmail(email)).orElse(null);
 
 		if(userInfo == null){
 			return ResponseService.failed();
@@ -54,14 +67,14 @@ public class ActionController {
 
 		if((user.getRole() == Role.teacher && userInfo.getRole() == Role.student) ||
 				(user.getRole() == Role.chief_teacher && userInfo.getRole().ordinal() < 2)){
-			userEntityRepository.delete(userInfo);
+			userRepository.delete(userInfo);
 			Map<String, Object> response = new HashMap<>();
-			response.put("successful", true);
+			response.put("ok", true);
 			return ResponseEntity.ok().body(response);
 		}
 		return ResponseService.failed("no_permission");
 	}
-	@PutMapping("/edit-profile")
+	@PutMapping("/edit")
 	public ResponseEntity<Object> editProfile(HttpServletRequest req, @RequestBody EditedUser editedUser){
 		UserEntity user = AuthUtil.authorizedUser(req);
 
@@ -111,9 +124,9 @@ public class ActionController {
 			user.setLast_name(newUserInfo.getLast_name());
 
 
-			userEntityRepository.save(user);
+			userRepository.save(user);
 			Map<String, Object> response = new HashMap<>();
-			response.put("successful", true);
+			response.put("ok", true);
 			return ResponseEntity.ok().body(response);
 		}
 		return ResponseService.failed("incorrect_password");

@@ -8,8 +8,8 @@ public class ResponseService {
 	static public ResponseEntity<Object> failed(String error, HttpStatus httpStatus) {
 		HashMap<String, Object> response = new HashMap<>();
 
+		response.put("ok", false);
 		response.put("error", error);
-		response.put("success", false);
 
 		return ResponseEntity
 				.status(httpStatus)

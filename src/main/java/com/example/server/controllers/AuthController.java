@@ -3,7 +3,7 @@ package com.example.server.controllers;
 import com.example.server.entities.UserEntity;
 import com.example.server.models.Role;
 import com.example.server.models.UserWithTokens;
-import com.example.server.repositories.UserEntityRepository;
+import com.example.server.repositories.UserRepository;
 import com.example.server.services.CheckValidDataService;
 import com.example.server.services.ResponseService;
 import com.example.server.utils.AuthUtil;
@@ -11,7 +11,6 @@ import com.example.server.utils.JwtUtil;
 import com.example.server.utils.RefreshTokenUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +24,7 @@ import java.util.Map;
 public class AuthController {
 
 	@Autowired
-	UserEntityRepository userEntityRepository;
+    UserRepository userRepository;
 
 	private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -36,6 +35,7 @@ public class AuthController {
 			return null;
 		}
 		Map<String, Object> response = new HashMap<>();
+		response.put("ok", true);
 		response.put("accessToken", userWithTokens.getAccessToken());
 		response.put("refreshToken", userWithTokens.getRefreshToken());
 		return ResponseEntity.ok().body(response);
@@ -50,7 +50,7 @@ public class AuthController {
 			return ResponseService.failed();
 		}
 
-		UserEntity user = userEntityRepository.findByEmail(userInfo.getEmail()).get();
+		UserEntity user = userRepository.findByEmail(userInfo.getEmail()).get();
 
 		if(user == null){
 			return ResponseService.failed();
@@ -58,6 +58,7 @@ public class AuthController {
 
 		if(passwordEncoder.matches(userInfo.getPassword(), user.getPassword())){
 			Map<String, Object> response = new HashMap<>();
+			response.put("ok", true);
 			response.put("accessToken", JwtUtil.generateToken(String.valueOf(user.getId())));
 			response.put("refreshToken", RefreshTokenUtil.createRefreshToken(user).getToken());
 			return ResponseEntity.ok().body(response);
@@ -89,9 +90,9 @@ public class AuthController {
 					email, passwordEncoder.encode(password), first_name, last_name,
 					(user.getRole() == Role.chief_teacher) ? Role.teacher : Role.student
 			);
-			userEntityRepository.save(newUser);
+			userRepository.save(newUser);
 			Map<String, Object> response = new HashMap<>();
-			response.put("successful", true);
+			response.put("ok", true);
 			return ResponseEntity.ok().body(response);
 		}
 		return ResponseService.failed("no_permission");

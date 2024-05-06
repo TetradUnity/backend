@@ -3,7 +3,7 @@ package com.example.server.utils;
 import com.example.server.entities.RefreshToken;
 import com.example.server.entities.UserEntity;
 import com.example.server.models.UserWithTokens;
-import com.example.server.repositories.UserEntityRepository;
+import com.example.server.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -11,11 +11,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AuthUtil {
-	private static UserEntityRepository userEntityRepository;
+	private static UserRepository userRepository;
 
 	@Autowired
-	public AuthUtil(UserEntityRepository userEntityRepository) {
-		AuthUtil.userEntityRepository = userEntityRepository;
+	public AuthUtil(UserRepository userRepository) {
+		AuthUtil.userRepository = userRepository;
 	}
 
 	public static UserEntity authorizedUser(HttpServletRequest req) {
@@ -31,7 +31,7 @@ public class AuthUtil {
 			userId = Long.parseLong(JwtUtil.extract(token));
 		}catch(Exception e){return null;}
 
-		return userEntityRepository.findById(userId).orElse(null);
+		return userRepository.findById(userId).orElse(null);
 	}
 
 	public static UserWithTokens refreshAuthorizedUser(HttpServletRequest req){

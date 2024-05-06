@@ -5,8 +5,6 @@ import com.example.server.entities.UserEntity;
 import com.example.server.repositories.RefreshTokenRepository;
 import com.example.server.repositories.UserEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -17,10 +15,10 @@ import java.util.UUID;
 public class RefreshTokenUtil {
 
 	static private RefreshTokenRepository refreshTokenRepository;
-	static private UserEntityRepository userRepository;
+	static private UserRepository userRepository;
 
 	@Autowired
-	public RefreshTokenUtil(RefreshTokenRepository refreshTokenRepository, UserEntityRepository userRepository){
+	public RefreshTokenUtil(RefreshTokenRepository refreshTokenRepository, UserRepository userRepository){
 		RefreshTokenUtil.refreshTokenRepository = refreshTokenRepository;
 		RefreshTokenUtil.userRepository = userRepository;
 	}

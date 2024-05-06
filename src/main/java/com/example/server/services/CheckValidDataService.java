@@ -1,7 +1,7 @@
 package com.example.server.services;
 
 import com.example.server.entities.UserEntity;
-import com.example.server.repositories.UserEntityRepository;
+import com.example.server.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -10,11 +10,11 @@ import java.util.regex.Pattern;
 @Component
 public class CheckValidDataService {
 
-	private static UserEntityRepository userEntityRepository;
+	private static UserRepository userRepository;
 
 	@Autowired
-	CheckValidDataService(UserEntityRepository userEntityRepository){
-		CheckValidDataService.userEntityRepository = userEntityRepository;
+	CheckValidDataService(UserRepository userRepository){
+		CheckValidDataService.userRepository = userRepository;
 	}
 
 	public static String checkUser(UserEntity userEntity, boolean checkExists){
@@ -27,7 +27,7 @@ public class CheckValidDataService {
 		if(email == null || password  == null || first_name == null || last_name == null){
 			return "incorrect_data";
 		}
-		if(checkExists && !userEntityRepository.findByEmail(email).isEmpty()){
+		if(checkExists && !userRepository.findByEmail(email).isEmpty()){
 			return "user_already_exist";
 		}
 		Pattern pattern = Pattern.compile("^[a-zA-Z][a-zA-Z0-9._%+-]{4,}@[a-zA-Z][a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");

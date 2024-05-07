@@ -51,22 +51,20 @@ public class UserController {
 		return ResponseEntity.ok().body(response);
 	}
 	@DeleteMapping("/delete")
-	public ResponseEntity<Object> deleteUser(HttpServletRequest req, @RequestBody UserEntity userEmail){
+	public ResponseEntity<Object> deleteUser(HttpServletRequest req, @RequestBody long id){
 		UserEntity user = AuthUtil.authorizedUser(req);
 
 		if(user == null){
 			return ResponseService.failed();
 		}
 
-		String email = userEmail.getEmail();
-		UserEntity userInfo = (userRepository.findByEmail(email)).orElse(null);
+		UserEntity userInfo = (userRepository.findById(id)).orElse(null);
 
 		if(userInfo == null){
 			return ResponseService.failed();
 		}
 
-		if((user.getRole() == Role.teacher && userInfo.getRole() == Role.student) ||
-				(user.getRole() == Role.chief_teacher && userInfo.getRole().ordinal() < 2)){
+		if(user.getRole() == Role.chief_teacher && userInfo.getRole().ordinal() < 2){
 			userRepository.delete(userInfo);
 			Map<String, Object> response = new HashMap<>();
 			response.put("ok", true);

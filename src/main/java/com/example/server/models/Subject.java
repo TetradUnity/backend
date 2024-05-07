@@ -1,21 +1,32 @@
 package com.example.server.models;
 
-import java.util.List;
+import com.example.server.entities.SubjectEntity;
+
 import java.util.Set;
-import java.util.TreeSet;
 
 public class Subject {
     private String title;
-    private long teacherId;
+    private String teacherFirst_name;
+    private String teacherLast_name;
 
     private String description;
-    private Set<Long> studentsId;
+    private long[] studentsId;
 
     public Subject(){}
 
-    public Subject(String title, long teacherId, Set<Long> studentsId){
+    public Subject(SubjectEntity subject, String teacherFirst_name, String teacherLast_name, long[] studentsId){
+        this.title = subject.getTitle();
+        this.description = subject.getDescription();
+        this.teacherFirst_name = teacherFirst_name;
+        this.teacherLast_name = teacherLast_name;
+        this.studentsId = studentsId;
+    }
+
+    public Subject(String title, String description, String teacherFirst_name, String teacherLast_name, long[] studentsId) {
         this.title = title;
-        this.teacherId = teacherId;
+        this.description = description;
+        this.teacherFirst_name = teacherFirst_name;
+        this.teacherLast_name = teacherLast_name;
         this.studentsId = studentsId;
     }
 
@@ -27,27 +38,35 @@ public class Subject {
         this.title = title;
     }
 
-    public long getTeacherId() {
-        return teacherId;
+    public String getTeacherFirst_name() {
+        return teacherFirst_name;
     }
 
-    public void setTeacherId(long teacherId) {
-        this.teacherId = teacherId;
+    public void setTeacherFirst_name(String teacherFirst_name) {
+        this.teacherFirst_name = teacherFirst_name;
     }
 
-    public Set<Long> getStudentsId() {
-        return studentsId == null ? new TreeSet<Long>(): studentsId;
+    public String getTeacherLast_name() {
+        return teacherLast_name;
     }
 
-    public void setStudentsId(Set<Long> studentsId) {
-        this.studentsId = studentsId;
+    public void setTeacherLast_name(String teacherLast_name) {
+        this.teacherLast_name = teacherLast_name;
     }
 
     public String getDescription() {
-        return description == null ? "without description" : description;
+        return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public long[] getStudentsId() {
+        return studentsId;
+    }
+
+    public void setStudentsId(long[] studentsId) {
+        this.studentsId = studentsId;
     }
 }

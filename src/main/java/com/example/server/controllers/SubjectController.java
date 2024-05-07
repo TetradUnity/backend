@@ -5,6 +5,7 @@ import com.example.server.entities.SubjectEntity;
 import com.example.server.entities.UserEntity;
 import com.example.server.models.Role;
 import com.example.server.models.Subject;
+import com.example.server.models.SubjectCreate;
 import com.example.server.repositories.StudentSubjectRepository;
 import com.example.server.repositories.SubjectRepository;
 import com.example.server.repositories.UserRepository;
@@ -13,14 +14,9 @@ import com.example.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/subject")
@@ -33,7 +29,7 @@ public class SubjectController {
     private UserRepository userRepository;
 
     @PostMapping("create")
-    public ResponseEntity<Object> createSubject(HttpServletRequest req, @RequestBody Subject subject){
+    public ResponseEntity<Object> createSubject(HttpServletRequest req, @RequestBody SubjectCreate subjectCreate){
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if(user == null){
@@ -41,14 +37,14 @@ public class SubjectController {
         }
 
         if(user.getRole() == Role.chief_teacher){
-            if(subject.getTeacherId() == 0 || subject.getTitle() == null){
+            if(subjectCreate.getTeacherId() == 0 || subjectCreate.getTitle() == null){
                 return ResponseService.failed();
             }
 
-            SubjectEntity subjectEntity = subjectRepository.save(new SubjectEntity(subject));
+            SubjectEntity subjectEntity = subjectRepository.save(new SubjectEntity(subjectCreate));
             long subjectId = subjectEntity.getId();
 
-            Set<Long> userId = subject.getStudentsId();
+            Set<Long> userId = subjectCreate.getStudentsId();
 
             for(long id : userId){
                 user = userRepository.findById(id).orElse(null);
@@ -63,4 +59,33 @@ public class SubjectController {
         }
         return ResponseService.failed("no_permission");
     }
+
+//    @GetMapping("get")
+//    public ResponseEntity<Object> getSubject(HttpServletRequest req, @RequestBody long subjectId){
+//        UserEntity user = AuthUtil.authorizedUser(req);
+//
+//        if(user == null){
+//            return ResponseService.unauthorized();
+//        }
+//
+//        SubjectEntity subjectEntity = subjectRepository.findById(subjectId).orElse(null);
+//
+//        if(subjectEntity == null){
+//            return ResponseService.failed();
+//        }
+//
+//        if(studentSubjectRepository.findByStudentIdAndSubjectId(user.getId(), subjectId).isPresent() ||
+//            subjectEntity.getTeacherId() == user.getId() || user.getRole() == Role.chief_teacher
+//        ){
+//            UserEntity teacher = userRepository.findById(subjectEntity.getTeacherId()).orElse(null);
+//
+//            if(teacher == null){
+//                return ResponseService.failed();
+//            }
+//
+//            //List<>
+//
+//            Subject subject = new Subject(subjectEntity, teacher.getFirst_name(), teacher.getLast_name(), );
+//        }
+//    }
 }

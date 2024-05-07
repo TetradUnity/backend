@@ -1,6 +1,6 @@
 package com.example.server.entities;
 
-import com.example.server.models.Subject;
+import com.example.server.models.SubjectCreate;
 import jakarta.persistence.*;
 
 @Entity
@@ -26,10 +26,10 @@ public class SubjectEntity {
         this.description = description;
     }
 
-    public SubjectEntity(Subject subject){
-        this.title = subject.getTitle();
-        this.teacherId = subject.getTeacherId();
-        this.description = subject.getDescription();
+    public SubjectEntity(SubjectCreate subjectCreate){
+        this.title = subjectCreate.getTitle();
+        this.teacherId = subjectCreate.getTeacherId();
+        this.description = subjectCreate.getDescription();
     }
 
     public long getId() {

@@ -85,11 +85,16 @@ public class AuthController {
 			return ResponseService.unauthorized();
 		}
 
-		if(user.getRole() == Role.chief_teacher || user.getRole() == Role.teacher){
+		if(user.getRole() == Role.chief_teacher){
 			String email = newUserInfo.getEmail();
 			String password = newUserInfo.getPassword();
 			String first_name = newUserInfo.getFirst_name();
 			String last_name = newUserInfo.getLast_name();
+			Role role = newUserInfo.getRole();
+
+			if(role != Role.teacher && role != Role.student){
+				ResponseService.failed();
+			}
 
 			String validData = CheckValidDataService.checkUser(email, password, first_name, last_name, true);
 
@@ -98,8 +103,8 @@ public class AuthController {
 			}
 
 			UserEntity newUser = new UserEntity(
-					email, passwordEncoder.encode(password), first_name, last_name,
-					(user.getRole() == Role.chief_teacher) ? Role.teacher : Role.student
+					email, passwordEncoder.encode(password),
+					first_name, last_name, role
 			);
 			userRepository.save(newUser);
 			Map<String, Object> response = new HashMap<>();

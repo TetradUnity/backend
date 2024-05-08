@@ -1,4 +1,4 @@
-package com.example.server.controllers;
+package com.tetradunity.server.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

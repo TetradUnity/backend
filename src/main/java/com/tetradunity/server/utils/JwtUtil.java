@@ -10,7 +10,7 @@ public class JwtUtil {
 	public static String generateToken(String content) {
 		return Jwts.builder()
 				.setSubject(content)
-				.setExpiration(new Date(System.currentTimeMillis() + 86_400_000))
+				.setExpiration(new Date(System.currentTimeMillis() + 3600 * 60))
 				.signWith(SignatureAlgorithm.HS512, SECRET)
 				.compact();
 	}

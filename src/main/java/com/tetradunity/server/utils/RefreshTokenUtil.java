@@ -37,7 +37,7 @@ public class RefreshTokenUtil {
 	}
 
 	public static RefreshToken verifyExpiration(String token){
-		RefreshToken refreshToken = (refreshTokenRepository.findByToken(token)).get();
+		RefreshToken refreshToken = (refreshTokenRepository.findByToken(token)).orElse(null);
 
 		if(refreshToken == null){
 			return null;

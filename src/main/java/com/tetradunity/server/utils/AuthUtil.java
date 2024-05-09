@@ -20,7 +20,6 @@ public class AuthUtil {
 
 	public static UserEntity authorizedUser(HttpServletRequest req) {
 		String token = req.getHeader(HttpHeaders.AUTHORIZATION);
-
 		if (token == null) {
 			return null;
 		}
@@ -29,7 +28,10 @@ public class AuthUtil {
 
 		try{
 			userId = Long.parseLong(JwtUtil.extract(token));
-		}catch(Exception e){return null;}
+		}catch(Exception e){
+			e.printStackTrace(System.err);
+			return null;
+		}
 
 		return userRepository.findById(userId).orElse(null);
 	}

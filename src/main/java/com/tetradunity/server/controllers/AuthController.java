@@ -11,6 +11,7 @@ import com.tetradunity.server.utils.JwtUtil;
 import com.tetradunity.server.utils.RefreshTokenUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,11 +29,14 @@ public class AuthController {
 
 	private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
-	@GetMapping("create-admin")
-	public ResponseEntity<Object> method(){
-		UserEntity user = new UserEntity("maksimmankovskiy04@gmail.com",
-				passwordEncoder.encode("qwerty")
-				, "Maks", "Mankov", Role.chief_teacher);
+	@PostMapping("/create-admin")
+	public ResponseEntity<Object> method(@RequestBody UserEntity newUserInfo){
+		if (newUserInfo.getEmail() == null || newUserInfo.getPassword() == null || newUserInfo.getFirst_name() == null || newUserInfo.getLast_name() == null) {
+			return ResponseService.failed("bad_req");
+		}
+		UserEntity user = new UserEntity(newUserInfo.getEmail(),
+				passwordEncoder.encode(newUserInfo.getPassword())
+				, newUserInfo.getFirst_name(), newUserInfo.getLast_name(), Role.chief_teacher);
 		userRepository.save(user);
 		Map<String, Object> response = new HashMap<>();
 		response.put("ok", true);
@@ -61,10 +65,10 @@ public class AuthController {
 			return ResponseService.failed();
 		}
 
-		UserEntity user = userRepository.findByEmail(userInfo.getEmail()).get();
+		UserEntity user = userRepository.findByEmail(userInfo.getEmail()).orElse(null);
 
 		if(user == null){
-			return ResponseService.failed();
+			return ResponseService.failed("user_not_found", HttpStatus.NOT_FOUND);
 		}
 
 		if(passwordEncoder.matches(userInfo.getPassword(), user.getPassword())){
@@ -74,7 +78,8 @@ public class AuthController {
 			response.put("refreshToken", RefreshTokenUtil.createRefreshToken(user).getToken());
 			return ResponseEntity.ok().body(response);
 		}
-		return ResponseService.failed();
+
+		return ResponseService.failed("incorrect_password");
 	}
 
 	@PostMapping("/create-user")

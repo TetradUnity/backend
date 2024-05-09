@@ -5,13 +5,12 @@ import io.jsonwebtoken.*;
 import java.util.Date;
 
 public class JwtUtil {
-	private static final String SECRET = "xvgbretefbgfh4g3rg45byrtyt4y";
+	private static final String SECRET = "qZoRZL2wIMZvXvpN2MLxEZm8pXjqZ8du7zVRLjdi4eaGfc5l5Tv45Wolo6vNnuubqZoRZL2wIMZvXvpN2MLxEZm8pXjqZ8du7zVRLjdi4eaGfc5l5Tv45Wolo6vNnuub";
 
 	public static String generateToken(String content) {
-
 		return Jwts.builder()
 				.setSubject(content)
-				.setExpiration(new Date(System.currentTimeMillis() + 3600))
+				.setExpiration(new Date(System.currentTimeMillis() + 86_400_000))
 				.signWith(SignatureAlgorithm.HS512, SECRET)
 				.compact();
 	}

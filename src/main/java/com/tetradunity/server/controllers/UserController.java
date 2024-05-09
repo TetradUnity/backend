@@ -10,6 +10,7 @@ import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,7 +42,7 @@ public class UserController {
 		if(id != 0){
 			user = userRepository.findById(id).orElse(null);
 			if(user == null){
-				return ResponseService.failed();
+				return ResponseService.failed("user_not_found", HttpStatus.NOT_FOUND);
 			}
 		}
 

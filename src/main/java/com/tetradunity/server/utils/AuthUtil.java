@@ -29,7 +29,7 @@ public class AuthUtil {
 		try{
 			userId = Long.parseLong(JwtUtil.extract(token));
 		}catch(Exception e){
-			e.printStackTrace(System.err);
+			//e.printStackTrace(System.err);
 			return null;
 		}
 

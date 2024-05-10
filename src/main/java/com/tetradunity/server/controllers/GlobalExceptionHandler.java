@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Throwable.class)
-    public ResponseEntity<Object> handleException1() {
+    public ResponseEntity<Object> handleException1(Throwable e) {
+        System.err.println("[SERVER ERROR]");
+        e.printStackTrace(System.err);
+
         return ResponseService.failed("server_error", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

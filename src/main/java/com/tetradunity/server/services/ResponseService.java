@@ -24,5 +24,5 @@ public class ResponseService {
 		return failed(error, HttpStatus.BAD_REQUEST);
 	}
 
-	static public ResponseEntity<Object> failed(){return failed("incorrect_data");}
+	static public ResponseEntity<Object> failed(){return failed("bad_request");}
 }

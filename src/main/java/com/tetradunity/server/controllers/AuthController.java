@@ -53,7 +53,7 @@ public class AuthController {
 	public ResponseEntity<Object> refreshAuthorized(HttpServletRequest req){
 		UserWithTokens userWithTokens = AuthUtil.refreshAuthorizedUser(req);
 		if(userWithTokens == null){
-			return null;
+			return ResponseService.unauthorized();
 		}
 		Map<String, Object> response = new HashMap<>();
 		response.put("ok", true);

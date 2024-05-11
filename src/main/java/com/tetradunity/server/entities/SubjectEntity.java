@@ -1,5 +1,7 @@
 package com.tetradunity.server.entities;
 
+import java.util.Date;
+
 import com.tetradunity.server.models.SubjectCreate;
 import jakarta.persistence.*;
 
@@ -10,6 +12,8 @@ public class SubjectEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+
+    private Date examenEnd;
 
     private String title;
 

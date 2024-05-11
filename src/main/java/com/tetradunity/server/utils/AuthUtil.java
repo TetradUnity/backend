@@ -49,7 +49,7 @@ public class AuthUtil {
 			return new UserWithTokens(
 					userEntity,
 					JwtUtil.generateToken(String.valueOf(userEntity.getId())),
-					RefreshTokenUtil.createRefreshToken(userEntity)
+					RefreshTokenUtil.createRefreshToken(userEntity).getToken()
 			);
 		}
 		return null;

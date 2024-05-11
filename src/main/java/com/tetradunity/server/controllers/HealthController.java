@@ -13,5 +13,5 @@ public class HealthController {
         HashMap<String, Object> resp = new HashMap<>();
         resp.put("ok", true);
         return ResponseEntity.ok().body(resp);
-    }
+   }
 }

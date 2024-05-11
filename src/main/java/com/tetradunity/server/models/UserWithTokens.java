@@ -8,8 +8,6 @@ public class UserWithTokens {
 	private String accessToken;
 	private String refreshToken;
 
-	public UserWithTokens(UserEntity userEntity, String accessToken, RefreshToken refreshToken){}
-
 	public UserWithTokens(UserEntity userEntity, String accessToken, String refreshToken){
 		this.userEntity = userEntity;
 		this.accessToken = accessToken;

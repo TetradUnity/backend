@@ -14,7 +14,7 @@ public class GradesEntity {
     private int value;
     private long studentId;
     private long subjectId;
-    Date date = new Date();
+    long date = System.currentTimeMillis;
 
     public GradesEntity() {}
 

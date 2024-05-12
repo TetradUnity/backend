@@ -1,8 +1,6 @@
 package com.tetradunity.server.entities;
 
 import java.util.Date;
-
-import com.tetradunity.server.models.SubjectCreate;
 import jakarta.persistence.*;
 
 @Entity
@@ -13,27 +11,25 @@ public class SubjectEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private Date examenEnd;
+    private Date examEnd;
+    private Date start;
 
     private String title;
-
-
     private String description;
 
     private long teacherId;
 
+    private String exam;
+
     public SubjectEntity(){}
 
-    public SubjectEntity(String title, long teacherId, String description){
+    public SubjectEntity(String title, long teacherId, String description, Date examEnd, Date start, String exam){
         this.title = title;
         this.teacherId = teacherId;
         this.description = description;
-    }
-
-    public SubjectEntity(SubjectCreate subjectCreate){
-        this.title = subjectCreate.getTitle();
-        this.teacherId = subjectCreate.getTeacherId();
-        this.description = subjectCreate.getDescription();
+        this.examEnd = examEnd;
+        this.start = start;
+        this.exam = exam;
     }
 
     public long getId() {
@@ -66,6 +62,30 @@ public class SubjectEntity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Date getExamEnd() {
+        return examEnd;
+    }
+
+    public void setExamEnd(Date examEnd) {
+        this.examEnd = examEnd;
+    }
+
+    public Date getStart() {
+        return start;
+    }
+
+    public void setStart(Date start) {
+        this.start = start;
+    }
+
+    public String getExam() {
+        return exam;
+    }
+
+    public void setExam(String exam) {
+        this.exam = exam;
     }
 
 }

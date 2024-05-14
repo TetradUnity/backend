@@ -11,8 +11,8 @@ public class SubjectEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private Date examEnd;
-    private Date start;
+    private long examEnd;
+    private long start;
 
     private String title;
     private String description;
@@ -23,13 +23,22 @@ public class SubjectEntity {
 
     public SubjectEntity(){}
 
-    public SubjectEntity(String title, long teacherId, String description, Date examEnd, Date start, String exam){
+    public SubjectEntity(String title, long teacherId, String description, long examEnd, long start, String exam){
         this.title = title;
         this.teacherId = teacherId;
         this.description = description;
         this.examEnd = examEnd;
         this.start = start;
         this.exam = exam;
+    }
+
+    public SubjectEntity(SubjectCreate subject, long teacherId){
+        this.title = subject.getTitle();
+        this.teacherId = teacherId;
+        this.description = subject.getDescription();
+        this.examEnd = subject.getExamEnd();
+        this.start = subject.getStart();
+        this.exam = subject.getExam();
     }
 
     public long getId() {
@@ -64,19 +73,19 @@ public class SubjectEntity {
         this.description = description;
     }
 
-    public Date getExamEnd() {
+    public long getExamEnd() {
         return examEnd;
     }
 
-    public void setExamEnd(Date examEnd) {
+    public void setExamEnd(long examEnd) {
         this.examEnd = examEnd;
     }
 
-    public Date getStart() {
+    public long getStart() {
         return start;
     }
 
-    public void setStart(Date start) {
+    public void setStart(long start) {
         this.start = start;
     }
 

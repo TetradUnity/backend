@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface StudentSubjectRepository extends CrudRepository<StudentSubjectEntity, Long> {
     Optional<StudentSubjectEntity> findByStudentIdAndSubjectId(long studentId, long subjectId);
+    List<StudentSubjectEntity> findBySubjectId(long subjectId);
 }

@@ -1,33 +1,51 @@
 package com.tetradunity.server.models;
 
 import com.tetradunity.server.entities.SubjectEntity;
+import java.util.List;
 
-import java.util.Set;
+class Teacher{
+    private long id;
+    private String first_name;
+    private String last_name;
+    private String email;
+
+    Teacher(UserEntity user){
+        this.id = user.getId();
+        this.first_name = user.getFirst_name();
+        this.last_name = user.getLast_name();
+        this.email = user.getEmail();
+    }
+}
+
+class Student{
+    private long id;
+    private String first_name;
+    private String last_name;
+
+    Student(UserEntity user){
+        this.id = user.getId();
+        this.first_name = user.getFirst_name();
+        this.last_name = user.getLast_name(); 
+    }
+}
 
 public class Subject {
     private String title;
-    private String teacherFirst_name;
-    private String teacherLast_name;
+    private Teacher teacher;
 
     private String description;
-    private long[] studentsId;
+    private Student[] students;
 
     public Subject(){}
 
-    public Subject(SubjectEntity subject, String teacherFirst_name, String teacherLast_name, long[] studentsId){
+    public Subject(SubjectEntity subject, UserEntity teacher, List<UserEntity> students){
         this.title = subject.getTitle();
         this.description = subject.getDescription();
-        this.teacherFirst_name = teacherFirst_name;
-        this.teacherLast_name = teacherLast_name;
-        this.studentsId = studentsId;
-    }
-
-    public Subject(String title, String description, String teacherFirst_name, String teacherLast_name, long[] studentsId) {
-        this.title = title;
-        this.description = description;
-        this.teacherFirst_name = teacherFirst_name;
-        this.teacherLast_name = teacherLast_name;
-        this.studentsId = studentsId;
+        this.teacher = new Teacher(teacher);
+        this.students = new Student[students.size()];
+        for(int i = 0; i < this.students.length; i++){
+            this.students[i] = new Student(students.get(i));
+        }
     }
 
     public String getTitle() {
@@ -68,5 +86,9 @@ public class Subject {
 
     public void setStudentsId(long[] studentsId) {
         this.studentsId = studentsId;
+    }
+
+    public String getTeacherEmail() {
+        return teacherEmail;
     }
 }

@@ -130,4 +130,27 @@ public class UserController {
 		}
 		return ResponseService.failed("incorrect_password");
 	}
+
+	@GetMapping("getOptions")
+	public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestBody User user){
+		UserEntity user = AuthUtil.authorizedUser(req);
+
+		if(user == null){
+			return ResponseService.failed();
+		}
+
+		if(user.getRole() != Role.chief_teacher){
+			return ResponseService.failed("no_permission");
+		}
+
+		if(user.getEmail() == null || user.getRole() || user.getEmail().length() > 2){
+			return ResponseService.failed();
+		}
+
+		List<UserEntity> users = userRepository.findByEmailPrefixAndRole(user.getEmail(), user.getRole());
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("ok", true);
+		response.put("users", users);
+		return new ResponseEnity().ok().body(response);
 }

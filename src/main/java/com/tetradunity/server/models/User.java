@@ -3,8 +3,6 @@ package com.tetradunity.server.models;
 import com.tetradunity.server.entities.UserEntity;
 
 public class User {
-	private long id;
-
 	private String email, first_name, last_name;
 
 	private Role role;
@@ -23,14 +21,6 @@ public class User {
 		this.first_name = first_name;
 		this.last_name = last_name;
 		this.role = role;
-	}
-
-	public long getId() {
-		return id;
-	}
-
-	public void setId(long id) {
-		this.id = id;
 	}
 
 	public Role getRole() {

@@ -45,7 +45,7 @@ public class UserController {
 				return ResponseService.failed("user_not_found", HttpStatus.NOT_FOUND);
 			}
 		}
-
+		
 		response.put("ok", true);
 		response.put("user", new User(user));
 

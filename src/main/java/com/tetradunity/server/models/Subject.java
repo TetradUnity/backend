@@ -1,6 +1,8 @@
 package com.tetradunity.server.models;
 
 import com.tetradunity.server.entities.SubjectEntity;
+import com.tetradunity.server.entities.UserEntity;
+
 import java.util.List;
 
 class Teacher{
@@ -15,6 +17,38 @@ class Teacher{
         this.last_name = user.getLast_name();
         this.email = user.getEmail();
     }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getFirst_name() {
+        return first_name;
+    }
+
+    public void setFirst_name(String first_name) {
+        this.first_name = first_name;
+    }
+
+    public String getLast_name() {
+        return last_name;
+    }
+
+    public void setLast_name(String last_name) {
+        this.last_name = last_name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 }
 
 class Student{
@@ -26,6 +60,30 @@ class Student{
         this.id = user.getId();
         this.first_name = user.getFirst_name();
         this.last_name = user.getLast_name(); 
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getFirst_name() {
+        return first_name;
+    }
+
+    public void setFirst_name(String first_name) {
+        this.first_name = first_name;
+    }
+
+    public String getLast_name() {
+        return last_name;
+    }
+
+    public void setLast_name(String last_name) {
+        this.last_name = last_name;
     }
 }
 
@@ -56,20 +114,12 @@ public class Subject {
         this.title = title;
     }
 
-    public String getTeacherFirst_name() {
-        return teacherFirst_name;
+    public Teacher getTeacher() {
+        return teacher;
     }
 
-    public void setTeacherFirst_name(String teacherFirst_name) {
-        this.teacherFirst_name = teacherFirst_name;
-    }
-
-    public String getTeacherLast_name() {
-        return teacherLast_name;
-    }
-
-    public void setTeacherLast_name(String teacherLast_name) {
-        this.teacherLast_name = teacherLast_name;
+    public void setTeacher(Teacher teacher) {
+        this.teacher = teacher;
     }
 
     public String getDescription() {
@@ -80,15 +130,11 @@ public class Subject {
         this.description = description;
     }
 
-    public long[] getStudentsId() {
-        return studentsId;
+    public Student[] getStudents() {
+        return students;
     }
 
-    public void setStudentsId(long[] studentsId) {
-        this.studentsId = studentsId;
-    }
-
-    public String getTeacherEmail() {
-        return teacherEmail;
+    public void setStudents(Student[] students) {
+        this.students = students;
     }
 }

@@ -6,18 +6,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.json.*;
 
+import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 @Component
-public class CheckValidDataService {
+public class CheckValidService {
 
 	private static UserRepository userRepository;
 
 	@Autowired
-	CheckValidDataService(UserRepository userRepository){
-		CheckValidDataService.userRepository = userRepository;
+	CheckValidService(UserRepository userRepository){
+		CheckValidService.userRepository = userRepository;
 	}
 
 	public static String checkUser(UserEntity userEntity, boolean checkExists){
@@ -61,7 +62,7 @@ public class CheckValidDataService {
 		return "ok";
 	}
 
-	public static String check(String exam) throws RuntimeException {
+	public static String checkTest(String exam) throws RuntimeException {
 		JSONArray questions = new JSONArray(exam);
 		JSONArray proccessedQuestions = new JSONArray();
 		JSONObject proccessedQuestion;
@@ -73,6 +74,21 @@ public class CheckValidDataService {
 		JSONObject question;
 		Set<String> set;
 		boolean existsCorrect;
+		JSONObject GeneralInfo = questions.getJSONObject(0);
+        for (Iterator<String> it = GeneralInfo.keys(); it.hasNext(); ) {
+            String key = it.next();
+			switch (key){
+				case "time":
+					int val = GeneralInfo.getInt(key);
+					if(val <= 0){
+						GeneralInfo.put(key, 0);
+					}
+					break;
+				default:
+					GeneralInfo.remove(key);
+			}
+        }
+
 		for (Object temp : questions) {
 			question = (JSONObject) temp;
 			title = question.getString("title");

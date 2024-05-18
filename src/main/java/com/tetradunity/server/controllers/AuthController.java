@@ -4,7 +4,7 @@ import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.models.Role;
 import com.tetradunity.server.models.UserWithTokens;
 import com.tetradunity.server.repositories.UserRepository;
-import com.tetradunity.server.services.CheckValidDataService;
+import com.tetradunity.server.services.CheckValidService;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.utils.AuthUtil;
 import com.tetradunity.server.utils.JwtUtil;
@@ -107,7 +107,7 @@ public class AuthController {
 				ResponseService.failed();
 			}
 
-			String validData = CheckValidDataService.checkUser(email, password, first_name, last_name, true);
+			String validData = CheckValidService.checkUser(email, password, first_name, last_name, true);
 
 			if(!validData.equals("ok")){
 				return ResponseService.failed(validData);

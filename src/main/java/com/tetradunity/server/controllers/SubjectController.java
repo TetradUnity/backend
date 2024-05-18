@@ -2,24 +2,22 @@ package com.tetradunity.server.controllers;
 
 import com.tetradunity.server.entities.StudentSubjectEntity;
 import com.tetradunity.server.entities.SubjectEntity;
+import com.tetradunity.server.entities.TagSubjectEntity;
+import com.tetradunity.server.entities.TagEntity;
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.AnnounceSubject;
-import com.tetradunity.server.models.Role;
-import com.tetradunity.server.models.Subject;
-import com.tetradunity.server.models.SubjectCreate;
-import com.tetradunity.server.repositories.StudentSubjectRepository;
-import com.tetradunity.server.repositories.SubjectRepository;
-import com.tetradunity.server.repositories.UserRepository;
+import com.tetradunity.server.models.*;
+import com.tetradunity.server.repositories.*;
+import com.tetradunity.server.services.CheckValidService;
+import com.tetradunity.server.services.JSONService;
 import com.tetradunity.server.services.ResponseService;
-import com.tetradunity.server.services.CheckValidTestService;
 import com.tetradunity.server.utils.AuthUtil;
+import com.tetradunity.server.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import org.json.JSONObject;
 
 @RestController
 @RequestMapping("/subject")
@@ -30,9 +28,14 @@ public class SubjectController {
     private StudentSubjectRepository studentSubjectRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private TagRepository tagRepository;
+    @Autowired
+    private TagSubjectRepository tagSubjectRepository;
 
     @PostMapping("create")
-    public ResponseEntity<Object> createSubject(HttpServletRequest req, @RequestBody SubjectCreate subject){
+    public ResponseEntity<Object> createSubject(HttpServletRequest req,
+                                                @RequestBody SubjectCreate subject){
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if(user == null){
@@ -40,23 +43,31 @@ public class SubjectController {
         }
 
         if(user.getRole() == Role.chief_teacher){
-//            if(subject.getTeacherId() == 0 || subject.getTitle() == null ||
-//                subject.getExamEnd() == null || subject.getStart() == null){
-//                return ResponseService.failed();
-//            }
-
-            if(subject.getTeacherEmail() == null || subject.getTitle() == null ||
-                    subject.getExamEnd() == 0 || subject.getStart() == 0){
+            if(subject.getTeacher_email() == null || subject.getTitle() == null ||
+                    subject.getExam_end() == 0 || subject.getStart() == 0 ||
+                    subject.getShort_description() == null || subject.getDuration() == 0 ||
+                    subject.getTimetable() == null || subject.getTags() == null){
                 return ResponseService.failed();
             }
 
-            if(System.currentTimeMillis() + 259_199_999 > subject.getExamEnd() &&
-                subject.getExamEnd() + 86_399_999 > subject.getStart()){
+            UserEntity teacher = userRepository.findByEmail(subject.getTeacher_email()).orElse(null);
+
+            if(teacher == null){
+                return ResponseService.failed("teacher_not_exists");
+            }
+
+            if(System.currentTimeMillis() + 259_199_999 > subject.getExam_end() &&
+                subject.getExam_end() + 86_399_999 > subject.getStart() &&
+                subject.getDuration() < 259_199_999){
                     return ResponseService.failed("error_time");
                 }
 
-            if(subject.getDescription() == null){
-                subject.setDescription("");
+            String[] tags = subject.getTags();
+
+            for(String tag : tags){
+                if(tagRepository.findByTag(tag).isEmpty()){
+                    return ResponseService.failed("tag_no_exists");
+                }
             }
 
             if(subject.getExam() == null){
@@ -64,29 +75,37 @@ public class SubjectController {
             }
             else{
                 try{
-                    subject.setExam(CheckValidTestService.check(subject.getExam()));
+                    subject.setExam(CheckValidService.checkTest(subject.getExam()));
                 }catch(Exception e){
                     return ResponseService.failed();
                 }
             }
 
-            UserEntity teacher = userRepository.findByEmail(subject.getTeacherEmail).orElse(null);
-
-            if(teacher == null){
-                return ResponseService.failed();
+            if(subject.getDescription() == null){
+                subject.setDescription("");
             }
 
-            subjectRepository.save(new SubjectEntity(subject, teacher.getId()));
+
+            SubjectEntity subjectEntity;
 
             Map<String, Object> response = new HashMap<>();
             response.put("ok", true);
+            response.put("subject", subjectEntity = subjectRepository.save(new SubjectEntity(subject, teacher.getId())));
+
+            long id = subjectEntity.getId();
+
+            for(String tag : tags){
+                tagSubjectRepository.save(new TagSubjectEntity(id, tag));
+            }
+
             return ResponseEntity.ok().body(response);
         }
         return ResponseService.failed("no_permission");
     }
 
    @GetMapping("get")
-   public ResponseEntity<Object> getSubject(HttpServletRequest req, @RequestBody long subjectId){
+   public ResponseEntity<Object> getSubject(HttpServletRequest req,
+                                            @RequestParam long subjectId){
        UserEntity user = AuthUtil.authorizedUser(req);
 
        if(user == null){
@@ -100,20 +119,21 @@ public class SubjectController {
        }
 
        if(studentSubjectRepository.findByStudentIdAndSubjectId(user.getId(), subjectId).isPresent() ||
-           subjectEntity.getTeacherId() == user.getId() || user.getRole() == Role.chief_teacher
+           subjectEntity.getTeacher_id() == user.getId() || user.getRole() == Role.chief_teacher
        ){
-           UserEntity teacher = userRepository.findById(subjectEntity.getTeacherId()).orElse(null);
+           UserEntity teacher = userRepository.findById(subjectEntity.getTeacher_id()).orElse(null);
 
            if(teacher == null){
                return ResponseService.failed();
            }
 
            List<UserEntity> students = new ArrayList<>();
-           List<StudentSubjectEntity> students = studentSubjectRepository.findBySubjectId(subjectId);
+           List<StudentSubjectEntity> studentsSubject = studentSubjectRepository.findBySubjectId(subjectId);
            UserEntity student;
-           for(StudentSubjectEntity studentSubject : students){
-            if((student = userRepository.findById(studentSubject.getId()).orElse(null)) != null){
-                studentsId.add(student);
+           for(StudentSubjectEntity studentSubject : studentsSubject){
+            if((student = userRepository.findById(studentSubject.getStudentId()).orElse(null))
+                    != null){
+                students.add(student);
             }
            }
 
@@ -126,16 +146,52 @@ public class SubjectController {
    }
 
    @GetMapping("get-announce-subjects")
-   public ResponseEntity<Object> getAnnounceSubjects(){
-        List<SubjectEntity> subjectsEntity = subjectRepository.findAccessAnnounceSubject();
+   public ResponseEntity<Object> getAnnounceSubjects(
+           @RequestParam(name = "page", required = false, defaultValue = "1") int page){
+        List<SubjectEntity> subjectsEntity = subjectRepository.findAccessAnnounceSubject(page);
         List<AnnounceSubject> subjects = new ArrayList<>();
+        List<String> tags;
         for(SubjectEntity temp : subjectsEntity){
-            subjects.add(new AnnounceSubject(temp));
+            tags = tagSubjectRepository.findBySubject(temp.getId());
+            UserEntity teacher = userRepository.findById(temp.getId()).orElse(null);
+            subjects.add(new AnnounceSubject(temp, teacher.getFirst_name(),
+                    teacher.getLast_name(), tags.toArray(new String[tags.size()])));
         }
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
         response.put("subjects", subjects);
         return ResponseEntity.ok().body(response);
    }
-   
+
+   @GetMapping("get-detail-announce-subject")
+   public ResponseEntity<Object> getAnnounceSubjects(@RequestParam long id) {
+        SubjectEntity subject = subjectRepository.findById(id).orElse(null);
+        if(subject == null){
+            return ResponseService.failed();
+        }
+        int duration = JSONService.getTime(subject.getExam());
+        if(subject.getExam_end() < System.currentTimeMillis() + 10_800_000 + duration){
+            return ResponseService.failed("late");
+        }
+
+        UserEntity teacher = userRepository.findById(subject.getTeacher_id()).orElse(null);
+
+        DetailsAnnounceSubject subjectInfo = new DetailsAnnounceSubject(subject, duration,
+                teacher.getFirst_name(), teacher.getLast_name());
+
+       Map<String, Object> response = new HashMap<>();
+       response.put("ok", true);
+       response.put("subject", subjectInfo);
+       return ResponseEntity.ok().body(response);
+   }
+
+   @PostMapping("start-exam")
+    public ResponseEntity<Object> startExam(@RequestBody ExaminationRequest request){
+        if(request == null || request.isNull()){
+            return ResponseService.failed();
+        }
+
+        
+
+   }
 }

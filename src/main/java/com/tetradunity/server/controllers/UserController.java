@@ -5,7 +5,7 @@ import com.tetradunity.server.models.EditedUser;
 import com.tetradunity.server.models.Role;
 import com.tetradunity.server.models.User;
 import com.tetradunity.server.repositories.UserRepository;
-import com.tetradunity.server.services.CheckValidDataService;
+import com.tetradunity.server.services.CheckValidService;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -39,10 +40,20 @@ public class UserController {
 
 		Map<String, Object> response = new HashMap<>();
 
-		if(id != 0){
+		if(id != 0 && id != user.getId()){
+			Role myRole = user.getRole();
 			user = userRepository.findById(id).orElse(null);
-			if(user == null){
-				return ResponseService.failed("user_not_found", HttpStatus.NOT_FOUND);
+			switch (user.getRole()){
+				case student:
+					if(user.getRole() == Role.student){
+						user.setEmail(null);
+					}
+				case teacher:
+				case chief_teacher:
+					if(user == null){
+						return ResponseService.failed("user_not_found", HttpStatus.NOT_FOUND);
+					}
+					break;
 			}
 		}
 		
@@ -85,65 +96,53 @@ public class UserController {
 			return ResponseService.failed();
 		}
 
+		String email = editedUser.getEmail();
+		String first_name = editedUser.getFirst_name();
+		String last_name = editedUser.getLast_name();
+		String password = editedUser.getPassword();
 		String oldPassword = editedUser.getOldPassword();
-		if(oldPassword == null){
-			return ResponseService.failed();
-		}
 
-		UserEntity newUserInfo = editedUser.getNewUserInfo();
-
-		if(newUserInfo == null){
-			return ResponseService.failed();
-		}
-
-		if(passwordEncoder.matches(oldPassword, user.getPassword())){
-			String email = newUserInfo.getEmail();
-			email = (email == null) ? user.getEmail() : email;
-
-			String password = newUserInfo.getPassword();
-			password = (password == null) ? user.getPassword() : password;
-
-			String first_name = newUserInfo.getFirst_name();
-			first_name = (first_name == null) ? user.getFirst_name() : first_name;
-
-			String last_name = newUserInfo.getLast_name();
-			last_name = (last_name == null) ? user.getLast_name() : last_name;
-
-			boolean checkExists = !(email.equals(user.getEmail()));
-
-			String validData = CheckValidDataService.checkUser(email, password, first_name, last_name, checkExists);
-
-			if(!validData.equals("ok")){
-				return ResponseService.failed(validData);
+		if(password != null){
+			if(passwordEncoder.matches(oldPassword, user.getPassword())){
+				user.setPassword(password);
 			}
-
-			user.setEmail(newUserInfo.getEmail());
-			user.setPassword(newUserInfo.getPassword() != null ? passwordEncoder.encode(newUserInfo.getPassword()) : null);
-			user.setFirst_name(newUserInfo.getFirst_name());
-			user.setLast_name(newUserInfo.getLast_name());
-
-
-			userRepository.save(user);
-			Map<String, Object> response = new HashMap<>();
-			response.put("ok", true);
-			return ResponseEntity.ok().body(response);
+			else{
+				return ResponseService.failed("incorrect_password");
+			}
 		}
-		return ResponseService.failed("incorrect_password");
+
+		if(email != null){
+			user.setEmail(email);
+		}
+
+		if(first_name != null){
+			user.setEmail(email);
+		}
+
+		if(last_name != null){
+			user.setEmail(email);
+		}
+
+		userRepository.save(user);
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("ok", true);
+		return ResponseEntity.ok().body(response);
 	}
 
 	@GetMapping("getOptions")
-	public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestBody User user){
-		UserEntity user = AuthUtil.authorizedUser(req);
+	public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestBody User user) {
+		UserEntity me = AuthUtil.authorizedUser(req);
 
-		if(user == null){
+		if (me == null) {
 			return ResponseService.failed();
 		}
 
-		if(user.getRole() != Role.chief_teacher){
+		if (me.getRole() != Role.chief_teacher) {
 			return ResponseService.failed("no_permission");
 		}
 
-		if(user.getEmail() == null || user.getRole() || user.getEmail().length() > 2){
+		if (user.getEmail() == null || user.getRole() == null || user.getEmail().length() < 2) {
 			return ResponseService.failed();
 		}
 
@@ -152,5 +151,6 @@ public class UserController {
 		Map<String, Object> response = new HashMap<>();
 		response.put("ok", true);
 		response.put("users", users);
-		return new ResponseEnity().ok().body(response);
+		return ResponseEntity.ok().body(response);
+	}
 }

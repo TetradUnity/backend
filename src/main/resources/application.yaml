@@ -5,9 +5,9 @@ spring:
     hibernate:
       ddl-auto: update
   datasource:
-    url: jdbc:mysql://localhost:3306/db
-    username: root
-    password: password
+    url=jdbc: mysql://bybz3tyvn8bdqh4iwea6-mysql.services.clever-cloud.com:3306/bybz3tyvn8bdqh4iwea6
+    username: ue83oonudqbjcu3r
+    password: bj9TpcD116tzR5e8OGfn
     driver-class-name: com.mysql.cj.jdbc.Driver
   mail:
     host: smtp.gmail.com
@@ -29,3 +29,6 @@ first-chief-teacher:
   password: q21we43rt65y
   first-name: Максік
   last-name: Манько
+server:
+  address: 0.0.0.0
+  port: 8080

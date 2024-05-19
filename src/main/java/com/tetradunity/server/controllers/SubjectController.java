@@ -1,14 +1,11 @@
 package com.tetradunity.server.controllers;
 
-import com.tetradunity.server.entities.StudentSubjectEntity;
-import com.tetradunity.server.entities.SubjectEntity;
-import com.tetradunity.server.entities.TagSubjectEntity;
-import com.tetradunity.server.entities.TagEntity;
-import com.tetradunity.server.entities.UserEntity;
+import com.tetradunity.server.entities.*;
 import com.tetradunity.server.models.*;
 import com.tetradunity.server.repositories.*;
 import com.tetradunity.server.services.CheckValidService;
 import com.tetradunity.server.services.JSONService;
+import com.tetradunity.server.services.MailService;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.utils.AuthUtil;
 import com.tetradunity.server.utils.JwtUtil;
@@ -32,14 +29,23 @@ public class SubjectController {
     private TagRepository tagRepository;
     @Autowired
     private TagSubjectRepository tagSubjectRepository;
+    @Autowired
+    private ResultTestRepository resultTestRepository;
+    @Autowired
+    private MailService mailService;
+
 
     @PostMapping("create")
     public ResponseEntity<Object> createSubject(HttpServletRequest req,
-                                                @RequestBody SubjectCreate subject){
+                                                @RequestBody(required = false) SubjectCreate subject){
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if(user == null){
             return ResponseService.unauthorized();
+        }
+
+        if(subject == null){
+            return ResponseService.failed();
         }
 
         if(user.getRole() == Role.chief_teacher){
@@ -75,7 +81,7 @@ public class SubjectController {
             }
             else{
                 try{
-                    subject.setExam(CheckValidService.checkTest(subject.getExam()));
+                    subject.setExam(JSONService.checkTest(subject.getExam()));
                 }catch(Exception e){
                     return ResponseService.failed();
                 }
@@ -169,14 +175,14 @@ public class SubjectController {
         if(subject == null){
             return ResponseService.failed();
         }
-        int duration = JSONService.getTime(subject.getExam());
-        if(subject.getExam_end() < System.currentTimeMillis() + 10_800_000 + duration){
+        int durationExam = JSONService.getTime(subject.getExam());
+        if(subject.getExam_end() < System.currentTimeMillis() + 10_800_000 + durationExam){
             return ResponseService.failed("late");
         }
 
         UserEntity teacher = userRepository.findById(subject.getTeacher_id()).orElse(null);
 
-        DetailsAnnounceSubject subjectInfo = new DetailsAnnounceSubject(subject, duration,
+        DetailsAnnounceSubject subjectInfo = new DetailsAnnounceSubject(subject, durationExam,
                 teacher.getFirst_name(), teacher.getLast_name());
 
        Map<String, Object> response = new HashMap<>();
@@ -186,12 +192,49 @@ public class SubjectController {
    }
 
    @PostMapping("start-exam")
-    public ResponseEntity<Object> startExam(@RequestBody ExaminationRequest request){
+    public ResponseEntity<Object> startExam(@RequestBody(required = false) ExaminationRequest request){
         if(request == null || request.isNull()){
             return ResponseService.failed();
         }
 
-        
+        long subject_id = request.getSubjectId();
 
+        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
+
+        if(subject == null){
+            return ResponseService.failed();
+        }
+        int durationExam = JSONService.getTime(subject.getExam());
+
+        if(subject.getExam_end() < System.currentTimeMillis() + 10_800_000 + durationExam){
+            return ResponseService.failed();
+        }
+
+        String email = request.getEmail();
+        String first_name = request.getFirst_name();
+        String last_name = request.getLast_name();
+
+        if(resultTestRepository.existsByEmailAndSubjectId(email, subject_id)){
+            return ResponseService.failed();
+        }
+
+        String validData = CheckValidService.checkUser(email, first_name, last_name);
+
+        if(!validData.equals("ok")) {
+            return ResponseService.failed(validData);
+        }
+
+        String uid = UUID.randomUUID().toString();
+
+        ResultTestEntity resultTestEntity = new ResultTestEntity(subject_id, email, first_name, last_name, "", -1, 0, true, uid);
+
+        resultTestRepository.save(resultTestEntity);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+
+        mailService.sendLinkToExam(first_name, last_name, uid, subject.getTitle(), email);
+
+        return ResponseEntity.ok().body(response);
    }
 }

@@ -14,7 +14,8 @@ public class DetailsAnnounceSubject{
 
     private String title;
     private String description;
-    private int duration;
+    private int duration_exam;
+    private long duration;
     private String timetable;
 
     private String teacher_first_name;
@@ -22,11 +23,11 @@ public class DetailsAnnounceSubject{
 
     public DetailsAnnounceSubject(){}
 
-    public DetailsAnnounceSubject(SubjectEntity subject, int duration,
+    public DetailsAnnounceSubject(SubjectEntity subject, int duration_exam,
                                   String teacher_first_name, String teacher_last_name) {
         this(
                 subject.getExam_end(), subject.getStart(), subject.getTitle(),
-                subject.getDescription(), duration, subject.getTimetable(),
+                subject.getDescription(), duration_exam, subject.getDuration(), subject.getTimetable(),
                 teacher_first_name, teacher_last_name
         );
     }

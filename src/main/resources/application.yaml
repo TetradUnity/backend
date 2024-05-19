@@ -1,21 +1,20 @@
 spring:
-  config:
-  import: optional:file:.env[.properties]
   application:
     name: server
   jpa:
-  hibernate:
-  ddl-auto: update
+    hibernate:
+      ddl-auto: update
   datasource:
-    url: jdbc:mysql://monorail.proxy.rlwy.net:19427/railway
+    url: jdbc:mysql://localhost:3306/db
     username: root
-    password: qajCKsTTlDGKxGZmLshsIUjirlukxtMV
-    driver-class-name=com: com.mysql.cj.jdbc.Driver
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
   mail:
-    host: ${SPRING_MAIL_HOST}
-    port: ${SPRING_MAIL_PORT}
-    username: ${SPRING_MAIL_USERNAME}
-    password: ${SPRING_MAIL_PASSWORD}
+    host: smtp.gmail.com
+    port: 587
+    link-exam: 'https://exam/'
+    username: tetrad.unity4@gmail.com
+    password: azdecgbbtnvciazx
     properties:
       mail:
         debug: false
@@ -25,8 +24,8 @@ spring:
           auth: true
           starttls:
             enable: true
-server:
-  address: 0.0.0.0
-  port: 8080
-
-#spring.jpa.database-platform = org.hibernate.dialect.MySQLDialect
+first-chief-teacher:
+  email: maksik@gmail.com
+  password: q21we43rt65y
+  first-name: Максік
+  last-name: Манько

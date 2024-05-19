@@ -29,26 +29,6 @@ public class AuthController {
 
 	private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
-	@PostMapping("/create-admin")
-	public ResponseEntity<Object> method(@RequestBody UserEntity newUserInfo){
-		if (newUserInfo.getEmail() == null || newUserInfo.getPassword() == null || newUserInfo.getFirst_name() == null || newUserInfo.getLast_name() == null) {
-			return ResponseService.failed("bad_request");
-		}
-
-		UserEntity user = userRepository.findByEmail(newUserInfo.getEmail()).orElse(null);
-		if (user != null) {
-			return ResponseService.failed("user_already_exist");
-		}
-
-		user = new UserEntity(newUserInfo.getEmail(),
-				passwordEncoder.encode(newUserInfo.getPassword())
-				, newUserInfo.getFirst_name(), newUserInfo.getLast_name(), newUserInfo.getRole());
-		userRepository.save(user);
-		Map<String, Object> response = new HashMap<>();
-		response.put("ok", true);
-		return ResponseEntity.ok().body(response);
-	}
-
 	@PostMapping("/refresh-authorized")
 	public ResponseEntity<Object> refreshAuthorized(HttpServletRequest req){
 		UserWithTokens userWithTokens = AuthUtil.refreshAuthorizedUser(req);
@@ -63,7 +43,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<Object> login(@RequestBody UserEntity userInfo){
+	public ResponseEntity<Object> login(@RequestBody(required = false) UserEntity userInfo){
 		if(userInfo == null){
 			return ResponseService.failed();
 		}
@@ -89,7 +69,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/create-user")
-	public ResponseEntity<Object> createTeacher(HttpServletRequest req, @RequestBody UserEntity newUserInfo){
+	public ResponseEntity<Object> createTeacher(HttpServletRequest req, @RequestBody(required = false) UserEntity newUserInfo){
 		UserEntity user = AuthUtil.authorizedUser(req);
 
 		if(user == null){

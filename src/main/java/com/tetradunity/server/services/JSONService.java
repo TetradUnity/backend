@@ -45,8 +45,8 @@ public class JSONService {
             }
         }
 
-        for (int i = 1; i < questions.length(); i++) {
-            question = questions.getJSONObject(i);
+        for (int q = 1; q < questions.length(); q++) {
+            question = questions.getJSONObject(q);
             title = question.getString("title");
             if(title.trim().equals("")){
                 throw new RuntimeException();

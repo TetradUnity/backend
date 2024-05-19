@@ -19,6 +19,9 @@ public class AuthUtil {
 	}
 
 	public static UserEntity authorizedUser(HttpServletRequest req) {
+		if(req == null){
+			return null;
+		}
 		String token = req.getHeader(HttpHeaders.AUTHORIZATION);
 		if (token == null) {
 			return null;
@@ -37,6 +40,9 @@ public class AuthUtil {
 	}
 
 	public static UserWithTokens refreshAuthorizedUser(HttpServletRequest req){
+		if(req == null){
+			return null;
+		}
 		String token = req.getHeader(HttpHeaders.AUTHORIZATION);
 
 		if(token == null){

@@ -63,7 +63,7 @@ public class UserController {
 		return ResponseEntity.ok().body(response);
 	}
 	@DeleteMapping("/delete")
-	public ResponseEntity<Object> deleteUser(HttpServletRequest req, @RequestBody long id){
+	public ResponseEntity<Object> deleteUser(HttpServletRequest req, @RequestBody(required = false) long id){
 		UserEntity user = AuthUtil.authorizedUser(req);
 
 		if(user == null){
@@ -85,7 +85,7 @@ public class UserController {
 		return ResponseService.failed("no_permission");
 	}
 	@PutMapping("/edit")
-	public ResponseEntity<Object> editProfile(HttpServletRequest req, @RequestBody EditedUser editedUser){
+	public ResponseEntity<Object> editProfile(HttpServletRequest req, @RequestBody(required = false) EditedUser editedUser){
 		UserEntity user = AuthUtil.authorizedUser(req);
 
 		if(user == null){
@@ -131,7 +131,7 @@ public class UserController {
 	}
 
 	@GetMapping("getOptions")
-	public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestBody User user) {
+	public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestBody(required = false) User user) {
 		UserEntity me = AuthUtil.authorizedUser(req);
 
 		if (me == null) {
@@ -142,11 +142,15 @@ public class UserController {
 			return ResponseService.failed("no_permission");
 		}
 
+		if(user == null){
+			return ResponseService.failed();
+		}
+
 		if (user.getEmail() == null || user.getRole() == null || user.getEmail().length() < 2) {
 			return ResponseService.failed();
 		}
 
-		List<UserEntity> users = userRepository.findByEmailPrefixAndRole(user.getEmail(), user.getRole());
+		List<UserEntity> users = userRepository.findByEmailPrefixAndRole(user.getEmail(), user.getRole().name());
 
 		Map<String, Object> response = new HashMap<>();
 		response.put("ok", true);

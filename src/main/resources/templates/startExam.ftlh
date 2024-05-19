@@ -34,9 +34,9 @@
 <div id="body">
     <div id="div">
         <p>Вітаємо, ${first_name}!</p>
-        <p>Ось  ${password}</p>
-        <p>Одразу ж після входу ви можете змінити пароль на будь-який інший</p>
-        <p>З найкращими побажаннями</br>     <i>TetradUnity</i></p>
+        <p>Ось посилання на вступний екзамен <a href = ${link_exam}>${link_exam}}</a></p>
+        <p>Для вступу на ${subject_title}</p>
+        <p>бажаємо гарних результатів</br>     <i>TetradUnity</i></p>
     </div>
 </div>
 </body>

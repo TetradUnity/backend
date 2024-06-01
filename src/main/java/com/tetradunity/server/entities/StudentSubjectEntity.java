@@ -1,8 +1,12 @@
 package com.tetradunity.server.entities;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "student_subjects")
 public class StudentSubjectEntity {
 
@@ -13,35 +17,11 @@ public class StudentSubjectEntity {
     private long studentId;
     private long subjectId;
 
-    public StudentSubjectEntity() {}
+    public StudentSubjectEntity() {
+    }
 
     public StudentSubjectEntity(long studentId, long subjectId) {
         this.studentId = studentId;
         this.subjectId = subjectId;
-    }
-
-
-    public long getStudentId() {
-        return studentId;
-    }
-
-    public void setStudentId(long studentId) {
-        this.studentId = studentId;
-    }
-
-    public long getSubjectId() {
-        return subjectId;
-    }
-
-    public void setSubjectId(long subjectId) {
-        this.subjectId = subjectId;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public long getId() {
-        return id;
     }
 }

@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AnswersTest {
-    private String answer;
-    private String uid;
+public class SubjectFilter {
+    private String[] tags;
+    private Boolean hasExam;
 }

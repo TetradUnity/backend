@@ -9,7 +9,11 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AnswersTest {
-    private String answer;
-    private String uid;
+public class SubjectAnnounceDB {
+    private long id;
+    private String title;
+    private long teacher_id;
+    private String short_description;
+    private long time_exam_end;
+    private long time_start;
 }

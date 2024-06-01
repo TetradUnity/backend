@@ -20,12 +20,14 @@ public class ResultTestEntity {
     private String first_name;
     private String last_name;
     private String answers;
-    private int result;
+    private double result;
     private long end_time;
     private boolean is_exam;
     private String uid;
+    private int duration;
 
-    public ResultTestEntity(long parent_id, String email, String first_name, String last_name, String answers, int result, long end_time, boolean is_exam, String uid) {
+    public ResultTestEntity(long parent_id, String email, String first_name, String last_name, String answers, int result, long end_time, boolean is_exam,
+                            String uid, int duration) {
         this.parent_id = parent_id;
         this.email = email;
         this.first_name = first_name;
@@ -35,5 +37,6 @@ public class ResultTestEntity {
         this.end_time = end_time;
         this.is_exam = is_exam;
         this.uid = uid;
+        this.duration = duration;
     }
 }

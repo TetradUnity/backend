@@ -3,15 +3,14 @@ package com.tetradunity.server.controllers;
 import com.tetradunity.server.entities.*;
 import com.tetradunity.server.models.*;
 import com.tetradunity.server.repositories.*;
-import com.tetradunity.server.services.CheckValidService;
-import com.tetradunity.server.services.JSONService;
-import com.tetradunity.server.services.MailService;
-import com.tetradunity.server.services.ResponseService;
+import com.tetradunity.server.services.*;
 import com.tetradunity.server.utils.AuthUtil;
 import com.tetradunity.server.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -34,60 +33,60 @@ public class SubjectController {
     @Autowired
     private MailService mailService;
 
+    private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
     @PostMapping("create")
     public ResponseEntity<Object> createSubject(HttpServletRequest req,
-                                                @RequestBody(required = false) SubjectCreate subject){
+                                                @RequestBody(required = false) SubjectCreate subject) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
-        if(user == null){
+        if (user == null) {
             return ResponseService.unauthorized();
         }
 
-        if(subject == null){
+        if (subject == null) {
             return ResponseService.failed();
         }
 
-        if(user.getRole() == Role.chief_teacher){
-            if(subject.getTeacher_email() == null || subject.getTitle() == null ||
+        if (user.getRole() == Role.CHIEF_TEACHER) {
+            if (subject.getTeacher_email() == null || subject.getTitle() == null ||
                     subject.getExam_end() == 0 || subject.getStart() == 0 ||
                     subject.getShort_description() == null || subject.getDuration() == 0 ||
-                    subject.getTimetable() == null || subject.getTags() == null){
+                    subject.getTimetable() == null || subject.getTags() == null) {
                 return ResponseService.failed();
             }
 
             UserEntity teacher = userRepository.findByEmail(subject.getTeacher_email()).orElse(null);
 
-            if(teacher == null){
+            if (teacher == null) {
                 return ResponseService.failed("teacher_not_exists");
             }
 
-            if(System.currentTimeMillis() + 259_199_999 > subject.getExam_end() &&
-                subject.getExam_end() + 86_399_999 > subject.getStart() &&
-                subject.getDuration() < 259_199_999){
-                    return ResponseService.failed("error_time");
-                }
+            if (System.currentTimeMillis() + 259_199_999 > subject.getExam_end() &&
+                    subject.getExam_end() + 86_399_999 > subject.getStart() &&
+                    subject.getDuration() < 259_199_999) {
+                return ResponseService.failed("error_time");
+            }
 
             String[] tags = subject.getTags();
 
-            for(String tag : tags){
-                if(tagRepository.findByTag(tag).isEmpty()){
+            for (String tag : tags) {
+                if (tagRepository.findByTag(tag).isEmpty()) {
                     return ResponseService.failed("tag_no_exists");
                 }
             }
 
-            if(subject.getExam() == null){
+            if (subject.getExam() == null) {
                 subject.setExam("");
-            }
-            else{
-                try{
+            } else {
+                try {
                     subject.setExam(JSONService.checkTest(subject.getExam()));
-                }catch(Exception e){
+                } catch (Exception e) {
                     return ResponseService.failed();
                 }
             }
 
-            if(subject.getDescription() == null){
+            if (subject.getDescription() == null) {
                 subject.setDescription("");
             }
 
@@ -100,7 +99,7 @@ public class SubjectController {
 
             long id = subjectEntity.getId();
 
-            for(String tag : tags){
+            for (String tag : tags) {
                 tagSubjectRepository.save(new TagSubjectEntity(id, tag));
             }
 
@@ -109,55 +108,75 @@ public class SubjectController {
         return ResponseService.failed("no_permission");
     }
 
-   @GetMapping("get")
-   public ResponseEntity<Object> getSubject(HttpServletRequest req,
-                                            @RequestParam long subjectId){
-       UserEntity user = AuthUtil.authorizedUser(req);
+    @GetMapping("get")
+    public ResponseEntity<Object> getSubject(HttpServletRequest req,
+                                             @RequestParam long subjectId) {
+        UserEntity user = AuthUtil.authorizedUser(req);
 
-       if(user == null){
-           return ResponseService.unauthorized();
-       }
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
 
-       SubjectEntity subjectEntity = subjectRepository.findById(subjectId).orElse(null);
+        SubjectEntity subjectEntity = subjectRepository.findById(subjectId).orElse(null);
 
-       if(subjectEntity == null){
-           return ResponseService.failed();
-       }
+        if (subjectEntity == null) {
+            return ResponseService.failed();
+        }
 
-       if(studentSubjectRepository.findByStudentIdAndSubjectId(user.getId(), subjectId).isPresent() ||
-           subjectEntity.getTeacher_id() == user.getId() || user.getRole() == Role.chief_teacher
-       ){
-           UserEntity teacher = userRepository.findById(subjectEntity.getTeacher_id()).orElse(null);
+        if (studentSubjectRepository.findByStudentIdAndSubjectId(user.getId(), subjectId).isPresent() ||
+                subjectEntity.getTeacher_id() == user.getId() || user.getRole() == Role.CHIEF_TEACHER
+        ) {
+            UserEntity teacher = userRepository.findById(subjectEntity.getTeacher_id()).orElse(null);
 
-           if(teacher == null){
-               return ResponseService.failed();
-           }
-
-           List<UserEntity> students = new ArrayList<>();
-           List<StudentSubjectEntity> studentsSubject = studentSubjectRepository.findBySubjectId(subjectId);
-           UserEntity student;
-           for(StudentSubjectEntity studentSubject : studentsSubject){
-            if((student = userRepository.findById(studentSubject.getStudentId()).orElse(null))
-                    != null){
-                students.add(student);
+            if (teacher == null) {
+                return ResponseService.failed();
             }
-           }
+
+            List<UserEntity> students = new ArrayList<>();
+            List<StudentSubjectEntity> studentsSubject = studentSubjectRepository.findBySubjectId(subjectId);
+            UserEntity student;
+            for (StudentSubjectEntity studentSubject : studentsSubject) {
+                if ((student = userRepository.findById(studentSubject.getStudentId()).orElse(null))
+                        != null) {
+                    students.add(student);
+                }
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("ok", true);
             response.put("subject", new Subject(subjectEntity, teacher, students));
             return ResponseEntity.ok().body(response);
-       }
-       return ResponseService.failed("no_permission");
-   }
+        }
+        return ResponseService.failed("no_permission");
+    }
 
-   @GetMapping("get-announce-subjects")
-   public ResponseEntity<Object> getAnnounceSubjects(
-           @RequestParam(name = "page", required = false, defaultValue = "1") int page){
-        List<SubjectEntity> subjectsEntity = subjectRepository.findAccessAnnounceSubject(page);
+    @GetMapping("get-announce-subjects")
+    public ResponseEntity<Object> getAnnounceSubjects(
+            @RequestParam(name = "page", required = false, defaultValue = "1") int page,
+            @RequestBody(required = false) SubjectFilter filter) {
+        List<SubjectAnnounceDB> subjectsEntity;
+
+        int pos = (page - 1) * 10;
+
+        if (filter == null) {
+            subjectsEntity = subjectRepository.findAccessAnnounceSubject(page);
+        } else {
+            String[] tags = filter.getTags();
+            Boolean hasExam = filter.getHasExam();
+            if (tags == null && hasExam == null) {
+                subjectsEntity = subjectRepository.findAccessAnnounceSubject(pos);
+            } else if (tags != null && hasExam == null) {
+                subjectsEntity = subjectRepository.findAccessAnnounceSubject(pos, tags);
+            } else if (tags == null && hasExam != null) {
+                subjectsEntity = subjectRepository.findAccessAnnounceSubject(pos, hasExam);
+            } else {
+                subjectsEntity = subjectRepository.findAccessAnnounceSubject(pos, tags, hasExam);
+            }
+        }
+
         List<AnnounceSubject> subjects = new ArrayList<>();
         List<String> tags;
-        for(SubjectEntity temp : subjectsEntity){
+        for (SubjectAnnounceDB temp : subjectsEntity) {
             tags = tagSubjectRepository.findBySubject(temp.getId());
             UserEntity teacher = userRepository.findById(temp.getId()).orElse(null);
             subjects.add(new AnnounceSubject(temp, teacher.getFirst_name(),
@@ -167,16 +186,16 @@ public class SubjectController {
         response.put("ok", true);
         response.put("subjects", subjects);
         return ResponseEntity.ok().body(response);
-   }
+    }
 
-   @GetMapping("get-detail-announce-subject")
-   public ResponseEntity<Object> getAnnounceSubjects(@RequestParam long id) {
+    @GetMapping("get-detail-announce-subject")
+    public ResponseEntity<Object> getAnnounceSubjects(@RequestParam long id) {
         SubjectEntity subject = subjectRepository.findById(id).orElse(null);
-        if(subject == null){
+        if (subject == null) {
             return ResponseService.failed();
         }
         int durationExam = JSONService.getTime(subject.getExam());
-        if(subject.getExam_end() < System.currentTimeMillis() + 10_800_000 + durationExam){
+        if (subject.getTime_exam_end() < System.currentTimeMillis() + 10_800_000 + durationExam) {
             return ResponseService.failed("late");
         }
 
@@ -185,15 +204,18 @@ public class SubjectController {
         DetailsAnnounceSubject subjectInfo = new DetailsAnnounceSubject(subject, durationExam,
                 teacher.getFirst_name(), teacher.getLast_name());
 
-       Map<String, Object> response = new HashMap<>();
-       response.put("ok", true);
-       response.put("subject", subjectInfo);
-       return ResponseEntity.ok().body(response);
-   }
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        response.put("subject", subjectInfo);
+        return ResponseEntity.ok().body(response);
+    }
 
-   @PostMapping("start-exam")
-    public ResponseEntity<Object> startExam(@RequestBody(required = false) ExaminationRequest request){
-        if(request == null || request.isNull()){
+    @PostMapping("create-link-exam")
+    public ResponseEntity<Object> createLinkExam(HttpServletRequest req, @RequestBody(required = false) ExaminationRequest request) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+
+        if (request == null || request.isNull()) {
             return ResponseService.failed();
         }
 
@@ -201,32 +223,43 @@ public class SubjectController {
 
         SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
-        if(subject == null){
+        if (subject == null) {
             return ResponseService.failed();
         }
+
         int durationExam = JSONService.getTime(subject.getExam());
 
-        if(subject.getExam_end() < System.currentTimeMillis() + 10_800_000 + durationExam){
+        if (subject.getTime_exam_end() < System.currentTimeMillis() + 10_800_000 + durationExam) {
             return ResponseService.failed();
         }
 
         String email = request.getEmail();
-        String first_name = request.getFirst_name();
-        String last_name = request.getLast_name();
 
-        if(resultTestRepository.existsByEmailAndSubjectId(email, subject_id)){
+        if (resultTestRepository.existsByEmailAndSubjectId(email, subject_id)) {
             return ResponseService.failed();
         }
 
-        String validData = CheckValidService.checkUser(email, first_name, last_name);
+        String first_name;
+        String last_name;
 
-        if(!validData.equals("ok")) {
-            return ResponseService.failed(validData);
+        user = user == null ? userRepository.findByEmail(email).orElse(null) : null;
+
+        if (user != null) {
+            first_name = user.getFirst_name();
+            last_name = user.getLast_name();
+        } else {
+            first_name = request.getFirst_name();
+            last_name = request.getLast_name();
+            String validData = CheckValidService.checkUser(email, first_name, last_name);
+
+            if (!validData.equals("ok")) {
+                return ResponseService.failed(validData);
+            }
         }
 
         String uid = UUID.randomUUID().toString();
 
-        ResultTestEntity resultTestEntity = new ResultTestEntity(subject_id, email, first_name, last_name, "", -1, 0, true, uid);
+        ResultTestEntity resultTestEntity = new ResultTestEntity(subject_id, email, first_name, last_name, "", -1, 0, true, uid, -1);
 
         resultTestRepository.save(resultTestEntity);
 
@@ -236,5 +269,245 @@ public class SubjectController {
         mailService.sendLinkToExam(first_name, last_name, uid, subject.getTitle(), email);
 
         return ResponseEntity.ok().body(response);
-   }
+    }
+
+    @PostMapping("start-exam")
+    public ResponseEntity<Object> createLinkExam(@RequestParam(name = "uid", required = true) String uid) {
+        if (uid == null) {
+            return ResponseService.failed();
+        }
+
+        ResultTestEntity resultTest = resultTestRepository.findByUID(uid).orElse(null);
+
+        if (resultTest == null) {
+            return ResponseService.failed();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(resultTest.getParent_id()).orElse(null);
+
+
+        int duration = JSONService.getTime(subject.getExam());
+
+        if (subject.getTime_exam_end() < System.currentTimeMillis() + duration + 20_000) {
+            return ResponseService.failed("late");
+        }
+
+        resultTest.setEnd_time(System.currentTimeMillis() + duration);
+
+        resultTestRepository.save(resultTest);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("exam", JSONService.getQuestions(subject.getExam()));
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("send-answer-exam")
+    public ResponseEntity<Object> sendAnswerExam(@RequestBody AnswersTest request) {
+        if (request == null) {
+            return ResponseService.failed();
+        }
+
+        ResultTestEntity resultTest = resultTestRepository.findByUID(request.getUid()).orElse(null);
+
+        if (resultTest == null) {
+            return ResponseService.failed();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(resultTest.getParent_id()).orElse(null);
+
+        if (subject.getTime_exam_end() < System.currentTimeMillis()) {
+            return ResponseService.failed("late");
+        }
+
+        String exam = subject.getExam();
+        int passing_grade = JSONService.getPassing_grade(exam);
+        double result;
+
+        try {
+            result = JSONService.checkAnswers(request.getAnswer(), subject.getExam());
+        } catch (RuntimeException ex) {
+            return ResponseService.failed();
+        }
+
+        if (result < passing_grade) {
+            resultTestRepository.delete(resultTest);
+        } else {
+            int duration = JSONService.getTime(exam);
+            long current = System.currentTimeMillis();
+
+            resultTest.setAnswers(request.getAnswer());
+            resultTest.setResult(result);
+            resultTest.setDuration((int) (current + duration - resultTest.getEnd_time()));
+            resultTest.setEnd_time(current);
+
+            resultTestRepository.save(resultTest);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("result", result);
+        response.put("passing_grade", passing_grade);
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("get-candidates")
+    public ResponseEntity<Object> getCandidates(HttpServletRequest req, @RequestParam(required = true) long subjectId) {
+
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(subjectId).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        if (subject.is_start()) {
+            return ResponseService.failed("late");
+        }
+
+        if (user.getRole() != Role.CHIEF_TEACHER && subject.getTeacher_id() != user.getId()) {
+            return ResponseService.failed("no_permission");
+        }
+
+        List<Candidate> candidates = resultTestRepository.findCandidatesByParent_id(subjectId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("candidates", candidates);
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("get-answers-candidate")
+    public ResponseEntity<Object> getAnswersCandidate(HttpServletRequest req, @RequestParam(required = true) long id) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+        ResultTestEntity resultTest = resultTestRepository.findById(id).orElse(null);
+
+        if (resultTest == null) {
+            return ResponseService.failed();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(resultTest.getParent_id()).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        if (subject.getTeacher_id() != user.getId() && user.getRole() != Role.CHIEF_TEACHER) {
+            return ResponseService.failed("no_permission");
+        }
+
+        String answers = resultTest.getAnswers();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("answers", answers);
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("reject-candidate")
+    public ResponseEntity<Object> responseCandidate(HttpServletRequest req, @RequestParam(required = true) long id) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+        ResultTestEntity resultTest = resultTestRepository.findById(id).orElse(null);
+
+        if (resultTest == null) {
+            return ResponseService.failed();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(resultTest.getParent_id()).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        if (subject.getTeacher_id() != user.getId()) {
+            return ResponseService.failed("no_permission");
+        }
+        mailService.sendExamFail(resultTest.getFirst_name(), user.getLast_name(), subject.getTitle(), resultTest.getEmail());
+
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("approve-students")
+    public ResponseEntity<Object> approveStudents(HttpServletRequest req, @RequestParam(required = true) long id) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+        ResultTestEntity resultTest = resultTestRepository.findById(id).orElse(null);
+
+        if (resultTest == null) {
+            return ResponseService.failed();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(resultTest.getParent_id()).orElse(null);
+
+        if (subject == null || subject.is_start()) {
+            return ResponseService.failed();
+        }
+
+        if (subject.getTeacher_id() != user.getId()) {
+            return ResponseService.failed("no_permission");
+        }
+
+        List<Candidate> candidates = resultTestRepository.findCandidatesByParent_id(subject.getId());
+
+        String studentEmail;
+        String first_name;
+        String last_name;
+        String password;
+        String subject_title = subject.getTitle();
+
+        UserEntity student;
+
+        for (Candidate candidate : candidates) {
+            studentEmail = candidate.getEmail();
+            student = userRepository.findByEmail(studentEmail).orElse(null);
+
+            if (student == null) {
+                password = UserService.generatePassword();
+                first_name = candidate.getFirst_name();
+                last_name = candidate.getLast_name();
+                student = new UserEntity(studentEmail, passwordEncoder.encode(password), first_name, last_name, Role.STUDENT);
+                String valid = CheckValidService.checkUser(student, false);
+                if (!valid.equals("ok")) {
+                    continue;
+                }
+                student = userRepository.save(student);
+
+                mailService.sendAuth(first_name, last_name, subject_title, password, studentEmail);
+            }
+
+            mailService.sendExamComplete(student.getFirst_name(), student.getLast_name(), subject_title, studentEmail);
+            studentSubjectRepository.save(new StudentSubjectEntity(student.getId(), subject.getId()));
+        }
+
+        subject.set_start(true);
+
+        long current = System.currentTimeMillis();
+
+        if (current > subject.getTime_start()) {
+            subject.setTime_start(current);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
 }

@@ -11,4 +11,8 @@ public interface TagRepository extends CrudRepository<TagEntity, Long> {
     @Query(value = "select * from tags", nativeQuery = true)
     List<TagEntity> findAll();
     Optional<TagEntity> findByTag(String tag);
+
+    default boolean existsTag(String tag){
+        return findByTag(tag).isPresent();
+    }
 }

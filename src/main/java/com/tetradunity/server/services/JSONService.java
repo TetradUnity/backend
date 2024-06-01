@@ -4,21 +4,178 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Iterator;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class JSONService {
-    public static int getTime(String exam){
-        try{
+    public static int getTime(String exam) {
+        try {
             JSONArray questions = new JSONArray(exam);
             return questions.getJSONObject(0).getInt("time");
-        }catch(JSONException ex){
+        } catch (JSONException ex) {
             return 0;
         }
     }
 
+    public static int getPassing_grade(String exam) {
+        try {
+            JSONArray questions = new JSONArray(exam);
+            return questions.getJSONObject(0).getInt("passing_grade");
+        } catch (JSONException ex) {
+            return 0;
+        }
+    }
+
+    public static String getQuestions(String examStr) throws RuntimeException {
+        if (examStr == null) {
+            return null;
+        }
+        JSONArray exam = new JSONArray(examStr);
+        JSONArray questions = new JSONArray();
+        questions.put(exam.getJSONObject(0));
+        JSONObject question;
+        JSONObject temp;
+        JSONArray answers;
+        JSONArray answersProcessed;
+        String type;
+
+        for (int i = 1; i < exam.length(); i++) {
+            temp = exam.getJSONObject(i);
+            type = temp.getString("type");
+            question = new JSONObject();
+            question.put("type", type);
+            question.put("title", temp.getString("title"));
+            switch (type) {
+                case "MULTY_ANSWER":
+                case "ONE_ANSWER":
+                    answers = temp.getJSONArray("answers");
+                    answersProcessed = new JSONArray();
+                    for (int j = 0; j < answers.length(); j++) {
+                        answersProcessed.put(answers.getJSONObject(j).getString("content"));
+                    }
+                    question.put("answers", answers);
+                    break;
+            }
+            questions.put(question);
+        }
+
+        return questions.toString();
+    }
+
+    public static double checkAnswers(String answersStr, String examStr) throws RuntimeException {
+        if (answersStr == null || examStr == null) {
+            throw new RuntimeException();
+        }
+
+        JSONArray exam = new JSONArray(examStr);
+        JSONArray answers = new JSONArray(answersStr);
+
+        double result = 0;
+
+        if (exam.length() != answers.length() + 1) {
+            throw new RuntimeException();
+        }
+
+        JSONArray answer;
+        JSONObject generalQuestion;
+        JSONArray generalAnswer;
+        JSONArray tempExamAnswers;
+        String type;
+
+        List<Integer> rightAnswers;
+
+        Set<Integer> setRightAnswers;
+
+        int selectedRightAnswers;
+        int selectedIncorrectAnswers;
+        int amountRightAnswers;
+
+        int index;
+
+        for (int i = 0; i < answers.length(); i++) {
+            answer = answers.getJSONArray(i);
+            generalQuestion = exam.getJSONObject(i + 1);
+            type = generalQuestion.getString("type");
+
+            switch (type) {
+                case "ONE_ANSWER":
+                    if (answer.length() > 1) {
+                        throw new RuntimeException();
+                    }
+                case "MULTY_ANSWER":
+                    rightAnswers = getRightAnswers(generalQuestion.getJSONArray("answer"));
+                    amountRightAnswers = rightAnswers.size();
+                    setRightAnswers = new TreeSet<>();
+                    selectedRightAnswers = 0;
+                    selectedIncorrectAnswers = 0;
+                    for (int j = 0; j < answer.length(); j++) {
+                        if (setRightAnswers.contains(index = answer.getInt(j))) {
+                            continue;
+                        }
+                        setRightAnswers.add(index);
+                        if (rightAnswers.contains(index)) {
+                            selectedRightAnswers++;
+                        } else {
+                            selectedIncorrectAnswers++;
+                        }
+                    }
+                    result += Math.max(0, (selectedRightAnswers - selectedIncorrectAnswers) / amountRightAnswers);
+                    break;
+                case "TEXT":
+                    if (consistValue(answer.getString(0), generalQuestion.getJSONArray("answer"))) {
+                        result++;
+                    }
+                    break;
+            }
+        }
+        return 100 * result / exam.length();
+    }
+
+    private static boolean consistValue(String value, JSONArray list) {
+        int length = list.length();
+        for (int i = 0; i < length; i++) {
+            if (list.getJSONObject(i).getString("content").equals(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<Integer> getRightAnswers(JSONArray answers) throws RuntimeException {
+        JSONObject answer;
+        List<Integer> rightAnswers = new ArrayList<>();
+
+        for (int i = 0; i < answers.length(); i++) {
+            answer = answers.getJSONObject(i);
+            if (answer.getBoolean("isCorrect")) {
+                rightAnswers.add(i);
+            }
+        }
+
+        return rightAnswers;
+    }
+
+    private static final Pattern patternFile = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}.[a-b0-9]{3,}$");
+
+    public static boolean checkFiles(String json) {
+        try {
+            JSONArray files = new JSONArray(json);
+            int length = files.length();
+            for (int i = 0; i < length; i++) {
+                if (!patternFile.matcher(files.getString(i)).matches()) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
     public static String checkTest(String exam) throws RuntimeException {
+        if (exam == null) {
+            throw new RuntimeException();
+        }
         JSONArray questions = new JSONArray(exam);
         JSONArray proccessedQuestions = new JSONArray();
         JSONObject proccessedQuestion;
@@ -31,13 +188,20 @@ public class JSONService {
         Set<String> set;
         boolean existsCorrect;
         JSONObject GeneralInfo = questions.getJSONObject(0);
+        int val;
         for (Iterator<String> it = GeneralInfo.keys(); it.hasNext(); ) {
             String key = it.next();
-            switch (key){
+            switch (key) {
                 case "time":
-                    int val = GeneralInfo.getInt(key);
-                    if(val <= 0){
-                        GeneralInfo.put(key, 0);
+                    val = GeneralInfo.getInt(key);
+                    if (val <= 0) {
+                        GeneralInfo.put(key, -1);
+                    }
+                    break;
+                case "passing_grade":
+                    val = GeneralInfo.getInt(key);
+                    if (val < 0 || val > 100) {
+                        throw new RuntimeException();
                     }
                     break;
                 default:
@@ -48,43 +212,41 @@ public class JSONService {
         for (int q = 1; q < questions.length(); q++) {
             question = questions.getJSONObject(q);
             title = question.getString("title");
-            if(title.trim().equals("")){
+            if (title.trim().equals("")) {
                 throw new RuntimeException();
             }
             answers = question.getJSONArray("answers");
             (proccessedQuestion = new JSONObject()).put("title", title);
             proccessedQuestion.put("type", type = question.getString("type"));
-            switch(type){
+            switch (type) {
                 case "ONE_ANSWER":
                     existsCorrect = false;
                     set = new TreeSet<>();
-                    for(int i = 0; i < answers.length(); i++){
+                    for (int i = 0; i < answers.length(); i++) {
                         answer = answers.getJSONObject(i);
-                        if((text = answer.getString("content")).trim().equals("")) {
+                        if ((text = answer.getString("content")).trim().equals("")) {
                             throw new RuntimeException();
                         }
-                        if(set.contains(text)){
+                        if (set.contains(text)) {
                             answers.remove(i--);
-                        }
-                        else{
+                        } else {
                             set.add(text);
                         }
-                        if(existsCorrect & (existsCorrect |= answer.getBoolean("isCorrect"))){
+                        if (existsCorrect & (existsCorrect |= answer.getBoolean("isCorrect"))) {
                             throw new RuntimeException();
                         }
                     }
                     break;
                 case "MULTY_ANSWER":
                     set = new TreeSet<>();
-                    for(int i = 0; i < answers.length(); i++){
+                    for (int i = 0; i < answers.length(); i++) {
                         answer = answers.getJSONObject(i);
-                        if((text = answer.getString("content")).trim().equals("")) {
+                        if ((text = answer.getString("content")).trim().equals("")) {
                             throw new RuntimeException();
                         }
-                        if(set.contains(text)){
+                        if (set.contains(text)) {
                             answers.remove(i--);
-                        }
-                        else{
+                        } else {
                             set.add(text);
                         }
                         answer.getBoolean("isCorrect");
@@ -92,7 +254,7 @@ public class JSONService {
                     break;
                 case "TEXT":
                     set = new TreeSet<>();
-                    for(int i = 0; i < answers.length(); i++) {
+                    for (int i = 0; i < answers.length(); i++) {
                         answer = answers.getJSONObject(i);
                         if ((text = answer.getString("content")).trim().equals("")) {
                             throw new RuntimeException();

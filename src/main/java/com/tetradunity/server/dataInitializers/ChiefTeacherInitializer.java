@@ -3,6 +3,7 @@ package com.tetradunity.server.dataInitializers;
 import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.models.Role;
 import com.tetradunity.server.repositories.UserRepository;
+import com.tetradunity.server.services.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -15,6 +16,9 @@ public class ChiefTeacherInitializer implements CommandLineRunner {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MailService mailService;
 
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -30,7 +34,7 @@ public class ChiefTeacherInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (!userRepository.existsChiefTeacher()) {
-            UserEntity user = new UserEntity(email, passwordEncoder.encode(password), first_name, last_name, Role.chief_teacher);
+            UserEntity user = new UserEntity(email, passwordEncoder.encode(password), first_name, last_name, Role.CHIEF_TEACHER);
             userRepository.save(user);
         }
     }

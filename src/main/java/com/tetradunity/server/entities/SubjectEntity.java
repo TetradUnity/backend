@@ -17,8 +17,9 @@ public class SubjectEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private long exam_end;
-    private long start;
+    private long time_exam_end;
+    private long time_start;
+    private long time_end;
 
     private String title;
     private String description;
@@ -29,25 +30,27 @@ public class SubjectEntity {
 
     private long teacher_id;
     private boolean is_end = false;
+    private boolean is_start = false;
 
     private String exam;
 
-    public SubjectEntity(){}
+    public SubjectEntity() {
+    }
 
-    public SubjectEntity(String title, long teacher_id, String description, long exam_end, long start,
-                         String exam, String short_description, int duration, String timetable){
+    public SubjectEntity(String title, long teacher_id, String description, long time_exam_end, long time_start,
+                         String exam, String short_description, int duration, String timetable) {
         this.title = title;
         this.teacher_id = teacher_id;
         this.description = description;
-        this.exam_end = exam_end;
-        this.start = start;
+        this.time_exam_end = time_exam_end;
+        this.time_start = time_start;
         this.exam = exam;
         this.short_description = short_description;
         this.duration = duration;
         this.timetable = timetable;
     }
 
-    public SubjectEntity(SubjectCreate subject, long teacher_id){
+    public SubjectEntity(SubjectCreate subject, long teacher_id) {
         this(subject.getTitle(),
                 teacher_id,
                 subject.getDescription(),
@@ -57,5 +60,9 @@ public class SubjectEntity {
                 subject.getShort_description(),
                 subject.getDuration(),
                 subject.getTimetable());
+    }
+
+    public boolean educationProcess() {
+        return is_start && !is_end && System.currentTimeMillis() > time_start;
     }
 }

@@ -7,7 +7,6 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "tags")
 public class TagEntity {
     @Id
@@ -15,4 +14,8 @@ public class TagEntity {
     private long id;
 
     private String tag;
+
+    public TagEntity(String tag) {
+        this.tag = tag;
+    }
 }

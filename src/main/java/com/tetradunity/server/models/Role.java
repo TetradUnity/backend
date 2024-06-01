@@ -1,6 +1,5 @@
 package com.tetradunity.server.models;
 
 public enum Role {
-	student, teacher, chief_teacher
-
+    STUDENT, TEACHER, CHIEF_TEACHER
 }

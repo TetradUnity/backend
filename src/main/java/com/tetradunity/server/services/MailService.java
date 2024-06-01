@@ -32,7 +32,7 @@ public class MailService {
     }
 
     @SneakyThrows
-    public void sendLinkToExam(final String first_name, final String last_name, final String uid, final String subject_title, final String email) {
+    public void sendLinkToExam(String first_name, String last_name, String uid, String subject_title, String email) {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
                 false,
@@ -45,16 +45,102 @@ public class MailService {
     }
 
     @SneakyThrows
-    private String getLetterStartExam(final String first_name, final String last_name, final String subject_title, final String link) {
-        StringWriter writer = new StringWriter();
+    private String getLetterStartExam(String first_name, String last_name, String subject_title, String link) {
         Map<String, Object> model = new HashMap<>();
         model.put("first_name", first_name);
         model.put("last_name", last_name);
         model.put("subject_title", subject_title);
-        model.put("link", link);
-        configuration.getTemplate("reminder.ftlh")
+        model.put("link_exam", link);
+        model.put("additional_content", "Ваш додатковий контент тут");
+
+        StringWriter writer = new StringWriter();
+        configuration.getTemplate("startExam.ftlh")
                 .process(model, writer);
-        return writer.getBuffer().toString();
+        return writer.toString();
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @SneakyThrows
+    public void sendExamComplete(String first_name, String last_name, String subject_title, String email) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
+                false,
+                "UTF-8");
+        helper.setSubject("Complete exam!");
+        helper.setTo(email);
+        String emailContent = getExamComplete(first_name, last_name, subject_title);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getExamComplete(String first_name, String last_name, String subject_title) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("first_name", first_name);
+        model.put("last_name", last_name);
+        model.put("subject_title", subject_title);
+        model.put("additional_content", "Ваш додатковий контент тут");
+
+        StringWriter writer = new StringWriter();
+        configuration.getTemplate("examComplete.ftlh")
+                .process(model, writer);
+        return writer.toString();
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @SneakyThrows
+    public void sendExamFail(String first_name, String last_name, String subject_title, String email) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
+                false,
+                "UTF-8");
+        helper.setSubject("Complete exam!");
+        helper.setTo(email);
+        String emailContent = getExamFail(first_name, last_name, subject_title);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getExamFail(String first_name, String last_name, String subject_title) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("first_name", first_name);
+        model.put("last_name", last_name);
+        model.put("subject_title", subject_title);
+        model.put("additional_content", "Ваш додатковий контент тут");
+
+        StringWriter writer = new StringWriter();
+        configuration.getTemplate("examFail.ftlh")
+                .process(model, writer);
+        return writer.toString();
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @SneakyThrows
+    public void sendAuth(String first_name, String last_name, String subject_title, String password, String email) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
+                false,
+                "UTF-8");
+        helper.setSubject("Complete exam!");
+        helper.setTo(email);
+        String emailContent = getAuth(first_name, last_name, subject_title, password);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getAuth(String first_name, String last_name, String subject_title, String password) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("first_name", first_name);
+        model.put("last_name", last_name);
+        model.put("subject_title", subject_title);
+        model.put("password", password);
+        model.put("additional_content", "Ваш додатковий контент тут");
+
+        StringWriter writer = new StringWriter();
+        configuration.getTemplate("auth.ftlh")
+                .process(model, writer);
+        return writer.toString();
+    }
 }

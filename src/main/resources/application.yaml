@@ -9,14 +9,14 @@ spring:
     hibernate:
       ddl-auto: update
   datasource:
-    url: jdbc:mysql://bybz3tyvn8bdqh4iwea6-mysql.services.clever-cloud.com:3306/bybz3tyvn8bdqh4iwea6
-    username: ue83oonudqbjcu3r
-    password: bj9TpcD116tzR5e8OGfn
+    url: jdbc:mysql://localhost:3306/db
+    username: admin
+    password: iikotozukumenoyumekarasametawatashinonounaikankyouwa
     driver-class-name: com.mysql.cj.jdbc.Driver
   mail:
     host: smtp.gmail.com
     port: 587
-    link-exam: 'https://exam/'
+    link-exam: https://exam/
     username: tetrad.unity4@gmail.com
     password: azdecgbbtnvciazx
     properties:
@@ -28,8 +28,23 @@ spring:
           auth: true
           starttls:
             enable: true
+
+cloud:
+  aws:
+    credentials:
+      access-key:
+      secret-key:
+    region:
+      static: us-east-2
+    stack:
+      auto: false
+
+application:
+  bucket:
+    name: javatechiestorage
+
 first-chief-teacher:
-  email: maksik@gmail.com
+  email: maksimmankivskiy04@gmail.com
   password: q21we43rt65y
-  first-name: Максік
-  last-name: Манько
+  first-name: Максим
+  last-name: Маньківський

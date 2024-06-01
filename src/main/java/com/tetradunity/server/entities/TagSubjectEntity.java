@@ -17,11 +17,11 @@ public class TagSubjectEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private long subject;
+    private long subject_id;
     private String tag;
 
-    public TagSubjectEntity(long subject, String tag){
-        this.subject = subject;
+    public TagSubjectEntity(long subject_id, String tag) {
+        this.subject_id = subject_id;
         this.tag = tag;
     }
 }

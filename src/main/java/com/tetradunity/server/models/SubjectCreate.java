@@ -7,9 +7,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class SubjectCreate{
-    private long exam_end;
-    private long start;
+public class SubjectCreate {
+    private long time_exam_end;
+    private long time_start;
     private String title;
     private String description;
     private String short_description;

@@ -25,7 +25,7 @@ public class TagController {
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {
-            return ResponseService.failed();
+            return ResponseService.unauthorized();
         }
 
         if (user.getRole() != Role.CHIEF_TEACHER) {
@@ -47,7 +47,11 @@ public class TagController {
     public ResponseEntity<Object> getTags() {
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
-        response.put("tags", tagRepository.findAll().toArray());
+        response.put("tags", tagRepository
+                .findAll()
+                .stream()
+                .map(TagEntity::getTag)
+                .toArray(String[]::new));
         return ResponseEntity.ok().body(response);
     }
 }

@@ -50,22 +50,23 @@ public class SubjectController {
 
         if (user.getRole() == Role.CHIEF_TEACHER) {
             if (subject.getTeacher_email() == null || subject.getTitle() == null ||
-                    subject.getExam_end() == 0 || subject.getStart() == 0 ||
+                    subject.getTime_exam_end() == 0 || subject.getTime_start() == 0 ||
                     subject.getShort_description() == null || subject.getDuration() == 0 ||
                     subject.getTimetable() == null || subject.getTags() == null) {
-                return ResponseService.failed();
+                return ResponseService.failed("incorrect_data");
             }
 
             UserEntity teacher = userRepository.findByEmail(subject.getTeacher_email()).orElse(null);
 
-            if (teacher == null) {
-                return ResponseService.failed("teacher_not_exists");
-            }
 
-            if (System.currentTimeMillis() + 259_199_999 > subject.getExam_end() &&
-                    subject.getExam_end() + 86_399_999 > subject.getStart() &&
+            if (System.currentTimeMillis() + 259_199_999 > subject.getTime_exam_end() &&
+                    subject.getTime_exam_end() + 86_399_999 > subject.getTime_start() &&
                     subject.getDuration() < 259_199_999) {
                 return ResponseService.failed("error_time");
+            }
+
+            if (teacher == null) {
+                return ResponseService.failed("teacher_not_exists");
             }
 
             String[] tags = subject.getTags();
@@ -82,14 +83,13 @@ public class SubjectController {
                 try {
                     subject.setExam(JSONService.checkTest(subject.getExam()));
                 } catch (Exception e) {
-                    return ResponseService.failed();
+                    return ResponseService.failed("incorrect_format_exam");
                 }
             }
 
             if (subject.getDescription() == null) {
                 subject.setDescription("");
             }
-
 
             SubjectEntity subjectEntity;
 

@@ -187,6 +187,7 @@ public class JSONService {
         JSONObject question;
         Set<String> set;
         boolean existsCorrect;
+        boolean temp;
         JSONObject GeneralInfo = questions.getJSONObject(0);
         int val;
         for (Iterator<String> it = GeneralInfo.keys(); it.hasNext(); ) {
@@ -208,7 +209,6 @@ public class JSONService {
                     GeneralInfo.remove(key);
             }
         }
-
         for (int q = 1; q < questions.length(); q++) {
             question = questions.getJSONObject(q);
             title = question.getString("title");
@@ -224,7 +224,7 @@ public class JSONService {
                     set = new TreeSet<>();
                     for (int i = 0; i < answers.length(); i++) {
                         answer = answers.getJSONObject(i);
-                        if ((text = answer.getString("content")).trim().equals("")) {
+                        if ((text = answer.getString("content")).trim().isEmpty()) {
                             throw new RuntimeException();
                         }
                         if (set.contains(text)) {
@@ -232,16 +232,18 @@ public class JSONService {
                         } else {
                             set.add(text);
                         }
-                        if (existsCorrect & (existsCorrect |= answer.getBoolean("isCorrect"))) {
+                        if ((temp = answer.getBoolean("isCorrect")) & existsCorrect) {
                             throw new RuntimeException();
                         }
+                        existsCorrect |= temp;
+                        System.out.println("mihau");
                     }
                     break;
                 case "MULTY_ANSWER":
                     set = new TreeSet<>();
                     for (int i = 0; i < answers.length(); i++) {
                         answer = answers.getJSONObject(i);
-                        if ((text = answer.getString("content")).trim().equals("")) {
+                        if ((text = answer.getString("content")).trim().isEmpty()) {
                             throw new RuntimeException();
                         }
                         if (set.contains(text)) {

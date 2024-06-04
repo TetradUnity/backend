@@ -2,6 +2,7 @@ package com.tetradunity.server.controllers;
 
 import com.tetradunity.server.entities.*;
 import com.tetradunity.server.models.*;
+import com.tetradunity.server.projections.AnnounceSubjectProjection;
 import com.tetradunity.server.repositories.*;
 import com.tetradunity.server.services.*;
 import com.tetradunity.server.utils.AuthUtil;
@@ -71,12 +72,6 @@ public class SubjectController {
 
             String[] tags = subject.getTags();
 
-            for (String tag : tags) {
-                if (tagRepository.findByTag(tag).isEmpty()) {
-                    return ResponseService.failed("tag_no_exists");
-                }
-            }
-
             if (subject.getExam() == null) {
                 subject.setExam("");
             } else {
@@ -91,18 +86,21 @@ public class SubjectController {
                 subject.setDescription("");
             }
 
-            SubjectEntity subjectEntity;
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("ok", true);
-            response.put("subject", subjectEntity = subjectRepository.save(new SubjectEntity(subject, teacher.getId())));
+            SubjectEntity subjectEntity = subjectRepository.save(new SubjectEntity(subject, teacher.getId()));
 
             long id = subjectEntity.getId();
 
+
             for (String tag : tags) {
+                if (tagRepository.findByTag(tag).isEmpty()) {
+                    tagRepository.save(new TagEntity(tag));
+                }
                 tagSubjectRepository.save(new TagSubjectEntity(id, tag));
             }
 
+            Map<String, Object> response = new HashMap<>();
+            response.put("ok", true);
+            response.put("subject_id", id);
             return ResponseEntity.ok().body(response);
         }
         return ResponseService.failed("no_permission");
@@ -154,37 +152,26 @@ public class SubjectController {
     public ResponseEntity<Object> getAnnounceSubjects(
             @RequestParam(name = "page", required = false, defaultValue = "1") int page,
             @RequestBody(required = false) SubjectFilter filter) {
-        List<SubjectAnnounceDB> subjectsEntity;
+        List<AnnounceSubjectProjection> subjectsAnnounce;
 
         int pos = (page - 1) * 10;
 
-        if (filter == null) {
-            subjectsEntity = subjectRepository.findAccessAnnounceSubject(page);
-        } else {
-            String[] tags = filter.getTags();
-            Boolean hasExam = filter.getHasExam();
-            if (tags == null && hasExam == null) {
-                subjectsEntity = subjectRepository.findAccessAnnounceSubject(pos);
-            } else if (tags != null && hasExam == null) {
-                subjectsEntity = subjectRepository.findAccessAnnounceSubject(pos, tags);
-            } else if (tags == null && hasExam != null) {
-                subjectsEntity = subjectRepository.findAccessAnnounceSubject(pos, hasExam);
-            } else {
-                subjectsEntity = subjectRepository.findAccessAnnounceSubject(pos, tags, hasExam);
-            }
-        }
+        subjectsAnnounce = subjectRepository.findAccessAnnounceSubject(pos, filter);
+
+        System.out.println(subjectsAnnounce);
 
         List<AnnounceSubject> subjects = new ArrayList<>();
         List<String> tags;
-        for (SubjectAnnounceDB temp : subjectsEntity) {
+        for (AnnounceSubjectProjection temp : subjectsAnnounce) {
             tags = tagSubjectRepository.findBySubject(temp.getId());
-            UserEntity teacher = userRepository.findById(temp.getId()).orElse(null);
+            UserEntity teacher = userRepository.findById(temp.getTeacher_id()).orElse(null);
             subjects.add(new AnnounceSubject(temp, teacher.getFirst_name(),
                     teacher.getLast_name(), tags.toArray(new String[tags.size()])));
         }
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
         response.put("subjects", subjects);
+        response.put("count_pages", subjectRepository.countAnnounceSubject(filter));
         return ResponseEntity.ok().body(response);
     }
 
@@ -192,7 +179,7 @@ public class SubjectController {
     public ResponseEntity<Object> getAnnounceSubjects(@RequestParam long id) {
         SubjectEntity subject = subjectRepository.findById(id).orElse(null);
         if (subject == null) {
-            return ResponseService.failed();
+            return ResponseService.notFound();
         }
         int durationExam = JSONService.getTime(subject.getExam());
         if (subject.getTime_exam_end() < System.currentTimeMillis() + 10_800_000 + durationExam) {

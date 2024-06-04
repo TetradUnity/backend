@@ -5,11 +5,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class SubjectFilter {
-    private String[] tags;
-    private Boolean hasExam;
+    private List<String> tags;
+    private Boolean has_exam;
+    private String email_teacher;
 }

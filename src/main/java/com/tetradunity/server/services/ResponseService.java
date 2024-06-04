@@ -2,27 +2,35 @@ package com.tetradunity.server.services;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import java.util.HashMap;
 
 public class ResponseService {
-	static public ResponseEntity<Object> failed(String error, HttpStatus httpStatus) {
-		HashMap<String, Object> response = new HashMap<>();
+    static public ResponseEntity<Object> failed(String error, HttpStatus httpStatus) {
+        HashMap<String, Object> response = new HashMap<>();
 
-		response.put("ok", false);
-		response.put("error", error);
+        response.put("ok", false);
+        response.put("error", error);
 
-		return ResponseEntity
-				.status(httpStatus)
-				.body(response);
-	}
+        return ResponseEntity
+                .status(httpStatus)
+                .body(response);
+    }
 
-	public static ResponseEntity<Object> unauthorized() {
-		return failed("unauthorized", HttpStatus.UNAUTHORIZED);
-	}
+    public static ResponseEntity<Object> unauthorized() {
+        return failed("unauthorized", HttpStatus.UNAUTHORIZED);
+    }
 
-	static public ResponseEntity<Object> failed(String error) {
-		return failed(error, HttpStatus.BAD_REQUEST);
-	}
+    static public ResponseEntity<Object> notFound() {
+        return failed("not_found", HttpStatus.NOT_FOUND);
+    }
 
-	static public ResponseEntity<Object> failed(){return failed("bad_request");}
+    static public ResponseEntity<Object> failed(String error) {
+        return failed(error, HttpStatus.BAD_REQUEST);
+    }
+
+    static public ResponseEntity<Object> failed() {
+        return failed("bad_request");
+    }
+
 }

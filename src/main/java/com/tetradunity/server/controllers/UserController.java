@@ -155,8 +155,8 @@ public class UserController {
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping("getOptions")
-    public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestBody(required = false) User user) {
+    @GetMapping("get_options")
+    public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestParam String email, @RequestParam Role role) {
         UserEntity me = AuthUtil.authorizedUser(req);
 
         if (me == null) {
@@ -167,15 +167,11 @@ public class UserController {
             return ResponseService.failed("no_permission");
         }
 
-        if (user == null) {
-            return ResponseService.failed();
+        if (email.length() < 2) {
+            return ResponseService.failed("very_short");
         }
 
-        if (user.getEmail() == null || user.getRole() == null || user.getEmail().length() < 2) {
-            return ResponseService.failed();
-        }
-
-        List<UserEntity> users = userRepository.findByEmailPrefixAndRole(user.getEmail(), user.getRole().name());
+        List<UserEntity> users = userRepository.findByEmailPrefixAndRole(email, role.name());
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);

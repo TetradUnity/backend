@@ -58,10 +58,10 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
         double res;
         if (filter == null) {
             res = countAnnounceSubject(new ArrayList<String>(), 0, null, null) / 10d;
+        } else {
+            List<String> tags = filter.getTags();
+            res = countAnnounceSubject(tags == null ? new ArrayList<String>() : tags, tags == null ? 0 : tags.size(), filter.getHas_exam(), filter.getEmail_teacher()) / 10d;
         }
-
-        List<String> tags = filter.getTags();
-        res = countAnnounceSubject(tags == null ? new ArrayList<String>() : tags, tags == null ? 0 : tags.size(), filter.getHas_exam(), filter.getEmail_teacher()) / 10d;
         return res > (int) res ? (int) res + 1 : (int) res;
     }
 }

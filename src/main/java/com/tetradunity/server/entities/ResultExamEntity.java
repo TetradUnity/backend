@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ResultTestEntity {
+public class ResultExamEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -22,11 +22,10 @@ public class ResultTestEntity {
     private String answers;
     private double result;
     private long end_time;
-    private boolean is_exam;
     private String uid;
     private int duration;
 
-    public ResultTestEntity(long parent_id, String email, String first_name, String last_name, String answers, int result, long end_time, boolean is_exam,
+    public ResultExamEntity(long parent_id, String email, String first_name, String last_name, String answers, int result, long end_time,
                             String uid, int duration) {
         this.parent_id = parent_id;
         this.email = email;
@@ -35,7 +34,6 @@ public class ResultTestEntity {
         this.answers = answers;
         this.result = result;
         this.end_time = end_time;
-        this.is_exam = is_exam;
         this.uid = uid;
         this.duration = duration;
     }

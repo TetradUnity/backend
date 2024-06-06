@@ -3,6 +3,7 @@ package com.tetradunity.server.controllers;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.services.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,17 +35,17 @@ public class StorageController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/download/{fileName}")
-    public ResponseEntity<Object> downloadFile(@PathVariable String fileName) {
-        byte[] fileData = storageService.downloadFile(fileName);
-        return ResponseEntity.ok()
-                .body(fileData);
+    @GetMapping("/download")
+    public ResponseEntity<Object> downloadFile(@RequestParam("path") String path) {
+        return ResponseEntity.ok().contentType(MediaType.valueOf(storageService.determineFileType(path))).body(storageService.downloadFile(path));
     }
 
-    @DeleteMapping("/delete/{fileName}")
-    public ResponseEntity<Object> deleteFile(@PathVariable String fileName) {
-        storageService.deleteFile(fileName);
-        return ResponseEntity.ok("File deleted successfully: " + fileName);
+    @DeleteMapping("/delete")
+    public ResponseEntity<Object> deleteFile(@RequestParam("path") String path) {
+        storageService.deleteFile(path);
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok(response);
     }
 
 }

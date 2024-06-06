@@ -6,7 +6,7 @@ import com.tetradunity.server.projections.AnnounceSubjectProjection;
 import com.tetradunity.server.repositories.*;
 import com.tetradunity.server.services.*;
 import com.tetradunity.server.utils.AuthUtil;
-import com.tetradunity.server.utils.JwtUtil;
+import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class SubjectController {
     @Autowired
     private TagSubjectRepository tagSubjectRepository;
     @Autowired
-    private ResultTestRepository resultTestRepository;
+    private ResultExamRepository resultExamRepository;
     @Autowired
     private MailService mailService;
 
@@ -148,7 +148,7 @@ public class SubjectController {
         return ResponseService.failed("no_permission");
     }
 
-    @GetMapping("get-announce-subjects")
+    @PostMapping("get-announce-subjects")
     public ResponseEntity<Object> getAnnounceSubjects(
             @RequestParam(name = "page", required = false, defaultValue = "1") int page,
             @RequestBody(required = false) SubjectFilter filter) {
@@ -222,7 +222,7 @@ public class SubjectController {
 
         String email = request.getEmail();
 
-        if (resultTestRepository.existsByEmailAndSubjectId(email, subject_id)) {
+        if (resultExamRepository.existsByEmailAndSubjectId(email, subject_id)) {
             return ResponseService.failed();
         }
 
@@ -246,9 +246,9 @@ public class SubjectController {
 
         String uid = UUID.randomUUID().toString();
 
-        ResultTestEntity resultTestEntity = new ResultTestEntity(subject_id, email, first_name, last_name, "", -1, 0, true, uid, -1);
+        ResultExamEntity resultExamEntity = new ResultExamEntity(subject_id, email, first_name, last_name, "", -1, 0, uid, -1);
 
-        resultTestRepository.save(resultTestEntity);
+        resultExamRepository.save(resultExamEntity);
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
@@ -264,13 +264,13 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        ResultTestEntity resultTest = resultTestRepository.findByUID(uid).orElse(null);
+        ResultExamEntity resultExam = resultExamRepository.findByUID(uid).orElse(null);
 
-        if (resultTest == null) {
+        if (resultExam == null) {
             return ResponseService.failed();
         }
 
-        SubjectEntity subject = subjectRepository.findById(resultTest.getParent_id()).orElse(null);
+        SubjectEntity subject = subjectRepository.findById(resultExam.getParent_id()).orElse(null);
 
 
         int duration = JSONService.getTime(subject.getExam());
@@ -279,9 +279,9 @@ public class SubjectController {
             return ResponseService.failed("late");
         }
 
-        resultTest.setEnd_time(System.currentTimeMillis() + duration);
+        resultExam.setEnd_time(System.currentTimeMillis() + duration);
 
-        resultTestRepository.save(resultTest);
+        resultExamRepository.save(resultExam);
 
         Map<String, Object> response = new HashMap<>();
         response.put("exam", JSONService.getQuestions(subject.getExam()));
@@ -295,7 +295,7 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        ResultTestEntity resultTest = resultTestRepository.findByUID(request.getUid()).orElse(null);
+        ResultExamEntity resultTest = resultExamRepository.findByUID(request.getUid()).orElse(null);
 
         if (resultTest == null) {
             return ResponseService.failed();
@@ -312,13 +312,13 @@ public class SubjectController {
         double result;
 
         try {
-            result = JSONService.checkAnswers(request.getAnswer(), subject.getExam());
+            result = JSONService.checkAnswers(subject.getExam(), request.getAnswer());
         } catch (RuntimeException ex) {
             return ResponseService.failed();
         }
 
         if (result < passing_grade) {
-            resultTestRepository.delete(resultTest);
+            resultExamRepository.delete(resultTest);
         } else {
             int duration = JSONService.getTime(exam);
             long current = System.currentTimeMillis();
@@ -328,7 +328,7 @@ public class SubjectController {
             resultTest.setDuration((int) (current + duration - resultTest.getEnd_time()));
             resultTest.setEnd_time(current);
 
-            resultTestRepository.save(resultTest);
+            resultExamRepository.save(resultTest);
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -361,7 +361,7 @@ public class SubjectController {
             return ResponseService.failed("no_permission");
         }
 
-        List<Candidate> candidates = resultTestRepository.findCandidatesByParent_id(subjectId);
+        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subjectId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("candidates", candidates);
@@ -376,7 +376,7 @@ public class SubjectController {
         if (user == null) {
             return ResponseService.unauthorized();
         }
-        ResultTestEntity resultTest = resultTestRepository.findById(id).orElse(null);
+        ResultExamEntity resultTest = resultExamRepository.findById(id).orElse(null);
 
         if (resultTest == null) {
             return ResponseService.failed();
@@ -407,7 +407,7 @@ public class SubjectController {
         if (user == null) {
             return ResponseService.unauthorized();
         }
-        ResultTestEntity resultTest = resultTestRepository.findById(id).orElse(null);
+        ResultExamEntity resultTest = resultExamRepository.findById(id).orElse(null);
 
         if (resultTest == null) {
             return ResponseService.failed();
@@ -437,7 +437,7 @@ public class SubjectController {
         if (user == null) {
             return ResponseService.unauthorized();
         }
-        ResultTestEntity resultTest = resultTestRepository.findById(id).orElse(null);
+        ResultExamEntity resultTest = resultExamRepository.findById(id).orElse(null);
 
         if (resultTest == null) {
             return ResponseService.failed();
@@ -453,7 +453,7 @@ public class SubjectController {
             return ResponseService.failed("no_permission");
         }
 
-        List<Candidate> candidates = resultTestRepository.findCandidatesByParent_id(subject.getId());
+        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subject.getId());
 
         String studentEmail;
         String first_name;

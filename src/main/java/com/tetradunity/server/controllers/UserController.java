@@ -3,6 +3,7 @@ package com.tetradunity.server.controllers;
 import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.models.EditedUser;
 import com.tetradunity.server.models.Role;
+import com.tetradunity.server.models.ShortInfoUser;
 import com.tetradunity.server.models.User;
 import com.tetradunity.server.repositories.UserRepository;
 import com.tetradunity.server.services.CheckValidService;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/user")
@@ -160,7 +162,7 @@ public class UserController {
         UserEntity me = AuthUtil.authorizedUser(req);
 
         if (me == null) {
-            return ResponseService.failed();
+            return ResponseService.unauthorized();
         }
 
         if (me.getRole() != Role.CHIEF_TEACHER) {
@@ -175,7 +177,10 @@ public class UserController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
-        response.put("users", users);
+        response.put("users", users
+                .stream()
+                .map(ShortInfoUser::new)
+                .collect(Collectors.toList()));
         return ResponseEntity.ok().body(response);
     }
 }

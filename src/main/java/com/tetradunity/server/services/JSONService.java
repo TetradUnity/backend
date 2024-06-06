@@ -26,21 +26,39 @@ public class JSONService {
         }
     }
 
-    public static String getQuestions(String examStr) throws RuntimeException {
-        if (examStr == null) {
+    public static boolean isViewing_correct_answers(String exam) {
+        try {
+            JSONArray questions = new JSONArray(exam);
+            return questions.getJSONObject(0).getBoolean("viewing_correct_answers");
+        } catch (JSONException ex) {
+            return false;
+        }
+    }
+
+    public static int getCount_attempt(String exam) {
+        try {
+            JSONArray questions = new JSONArray(exam);
+            return questions.getJSONObject(0).getInt("count_attempt");
+        } catch (JSONException ex) {
+            return 1;
+        }
+    }
+
+    public static String getQuestions(String testStr) throws RuntimeException {
+        if (testStr == null) {
             return null;
         }
-        JSONArray exam = new JSONArray(examStr);
+        JSONArray test = new JSONArray(testStr);
         JSONArray questions = new JSONArray();
-        questions.put(exam.getJSONObject(0));
+        questions.put(test.getJSONObject(0));
         JSONObject question;
         JSONObject temp;
         JSONArray answers;
         JSONArray answersProcessed;
         String type;
 
-        for (int i = 1; i < exam.length(); i++) {
-            temp = exam.getJSONObject(i);
+        for (int i = 1; i < test.length(); i++) {
+            temp = test.getJSONObject(i);
             type = temp.getString("type");
             question = new JSONObject();
             question.put("type", type);
@@ -53,8 +71,12 @@ public class JSONService {
                     for (int j = 0; j < answers.length(); j++) {
                         answersProcessed.put(answers.getJSONObject(j).getString("content"));
                     }
-                    question.put("answers", answers);
+                    question.put("answers", answersProcessed);
+                case "TEXT":
                     break;
+                default:
+                    throw new RuntimeException();
+
             }
             questions.put(question);
         }
@@ -62,7 +84,51 @@ public class JSONService {
         return questions.toString();
     }
 
-    public static double checkAnswers(String answersStr, String examStr) throws RuntimeException {
+    public static String getQuestionsWithYourAnswers(String testStr, String answersStr) throws RuntimeException {
+        JSONArray questions = new JSONArray(getQuestions(testStr));
+        JSONArray answers = new JSONArray(answersStr);
+        JSONArray result = new JSONArray();
+        JSONObject question;
+        JSONArray answer;
+
+        int length = questions.length();
+
+        if (length != answers.length()) {
+            throw new IllegalArgumentException();
+        }
+
+        for (int i = 0; i < length; i++) {
+            question = questions.getJSONObject(i);
+            answer = answers.getJSONArray(i);
+            question.put("your_answer", answer);
+            result.put(question);
+        }
+        return result.toString();
+    }
+
+    public static String getQuestionsWithYourAnswersRight(String testStr, String answersStr) throws RuntimeException {
+        JSONArray questions = new JSONArray(getQuestionsWithRightAnswers(testStr));
+        JSONArray answers = new JSONArray(answersStr);
+        JSONArray result = new JSONArray();
+        JSONObject question;
+        JSONArray answer;
+
+        int length = questions.length();
+
+        if (length != answers.length()) {
+            throw new IllegalArgumentException();
+        }
+
+        for (int i = 0; i < length; i++) {
+            question = questions.getJSONObject(i);
+            answer = answers.getJSONArray(i);
+            question.put("your_answer", answer);
+            result.put(question);
+        }
+        return result.toString();
+    }
+
+    public static double checkAnswers(String examStr, String answersStr) throws RuntimeException {
         if (answersStr == null || examStr == null) {
             throw new RuntimeException();
         }
@@ -78,8 +144,6 @@ public class JSONService {
 
         JSONArray answer;
         JSONObject generalQuestion;
-        JSONArray generalAnswer;
-        JSONArray tempExamAnswers;
         String type;
 
         List<Integer> rightAnswers;
@@ -172,11 +236,44 @@ public class JSONService {
         }
     }
 
-    public static String checkTest(String exam) throws RuntimeException {
-        if (exam == null) {
+    public static String getQuestionsWithRightAnswers(String testStr) {
+        if (testStr == null) {
+            return null;
+        }
+        JSONArray test = new JSONArray(testStr);
+        JSONArray questions = new JSONArray();
+        questions.put(test.getJSONObject(0));
+        JSONObject question;
+        JSONObject temp;
+        String type;
+
+        for (int i = 1; i < test.length(); i++) {
+            temp = test.getJSONObject(i);
+            type = temp.getString("type");
+            question = new JSONObject();
+            question.put("type", type);
+            question.put("title", temp.getString("title"));
+            switch (type) {
+                case "MULTY_ANSWER":
+                case "ONE_ANSWER":
+                case "TEXT":
+                    question.put("answers", temp.getJSONArray("answers"));
+                    break;
+                default:
+                    throw new RuntimeException();
+
+            }
+            questions.put(question);
+        }
+
+        return questions.toString();
+    }
+
+    public static String checkTest(String test) throws RuntimeException {
+        if (test == null) {
             throw new RuntimeException();
         }
-        JSONArray questions = new JSONArray(exam);
+        JSONArray questions = new JSONArray(test);
         JSONArray proccessedQuestions = new JSONArray();
         JSONObject proccessedQuestion;
         JSONArray answers;
@@ -202,6 +299,15 @@ public class JSONService {
                 case "passing_grade":
                     val = GeneralInfo.getInt(key);
                     if (val < 0 || val > 100) {
+                        throw new RuntimeException();
+                    }
+                    break;
+                case "viewing_correct_answers":
+                    GeneralInfo.getBoolean(key);
+                    break;
+                case "count_attempt":
+                    val = GeneralInfo.getInt(key);
+                    if (val < 0 || val > 3) {
                         throw new RuntimeException();
                     }
                     break;

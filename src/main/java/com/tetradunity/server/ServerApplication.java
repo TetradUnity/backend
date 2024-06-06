@@ -1,5 +1,6 @@
 package com.tetradunity.server;
 
+import com.tetradunity.server.dataInitializers.DotenvPropertySource;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -12,7 +13,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class ServerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ServerApplication.class, args);
+        SpringApplication application = new SpringApplication(ServerApplication.class);
+        application.addInitializers(new DotenvPropertySource());
+        application.run(args);
     }
 
     @Bean

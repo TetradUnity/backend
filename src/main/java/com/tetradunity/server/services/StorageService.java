@@ -3,14 +3,13 @@ package com.tetradunity.server.services;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
+import com.tetradunity.server.models.CustomMultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,12 +44,36 @@ public class StorageService {
         return fileName;
     }
 
-    public byte[] downloadFile(String fileName) {
-        S3Object s3Object = s3Client.getObject(bucketName, fileName);
-        S3ObjectInputStream inputStream = s3Object.getObjectContent();
+    public MultipartFile convertStringToMultipartFile(String content, String fileName) {
+        byte[] contentBytes = content.getBytes();
+        return new CustomMultipartFile(fileName, fileName, "text/plain", contentBytes);
+    }
+
+    private String getFileExtension(String fileName) {
+        if (fileName != null && fileName.lastIndexOf(".") != -1) {
+            return fileName.substring(fileName.lastIndexOf("."));
+        } else {
+            return "";
+        }
+    }
+
+    public String determineFileType(String path) {
+        return switch (getFileExtension(path)) {
+            case ".pdf" -> "application/pdf";
+            case ".png" -> "image/png";
+            case ".jpg", ".jpeg" -> "image/jpeg";
+            case ".txt" -> "text/plain";
+            case ".gif" -> "image/gif";
+            default -> "application/octet-stream";
+        };
+    }
+
+    public byte[] downloadFile(String path) {
+        S3ObjectInputStream inputStream = s3Client
+                .getObject(bucketName, path)
+                .getObjectContent();
         try {
-            byte[] content = IOUtils.toByteArray(inputStream);
-            return content;
+            return IOUtils.toByteArray(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -72,13 +95,6 @@ public class StorageService {
         s3Client.deleteObject(bucketName, fileName);
     }
 
-    private String getFileExtension(String fileName) {
-        if (fileName != null && fileName.lastIndexOf(".") != -1) {
-            return fileName.substring(fileName.lastIndexOf("."));
-        } else {
-            return "";
-        }
-    }
 
     private File convertMultiPartFileToFile(MultipartFile file) {
         File convertedFile = new File(file.getOriginalFilename());

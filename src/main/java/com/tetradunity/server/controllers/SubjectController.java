@@ -6,7 +6,6 @@ import com.tetradunity.server.projections.AnnounceSubjectProjection;
 import com.tetradunity.server.repositories.*;
 import com.tetradunity.server.services.*;
 import com.tetradunity.server.utils.AuthUtil;
-import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -302,6 +301,10 @@ public class SubjectController {
         }
 
         SubjectEntity subject = subjectRepository.findById(resultTest.getParent_id()).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
 
         if (subject.getTime_exam_end() < System.currentTimeMillis()) {
             return ResponseService.failed("late");

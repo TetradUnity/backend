@@ -16,7 +16,7 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
 
     @Query(value = "SELECT s.id, s.title, s.teacher_id, s.short_description, s.time_exam_end, s.time_start " +
             "FROM subjects s " +
-            "JOIN ( " +
+            "LEFT JOIN ( " +
             "    SELECT subject_id " +
             "    FROM tags_subject " +
             "    WHERE :count_tags = 0 OR tag IN :tags " +
@@ -32,7 +32,7 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
 
     @Query(value = "SELECT COUNT(*) " +
             "FROM subjects s " +
-            "JOIN ( " +
+            "LEFT JOIN ( " +
             "    SELECT subject_id " +
             "    FROM tags_subject " +
             "    WHERE :count_tags = 0 OR tag IN :tags " +

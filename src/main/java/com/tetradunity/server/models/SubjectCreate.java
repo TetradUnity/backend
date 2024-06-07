@@ -2,10 +2,12 @@ package com.tetradunity.server.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public class SubjectCreate {
     private long time_exam_end;
@@ -18,4 +20,5 @@ public class SubjectCreate {
     private String teacher_email;
     private String[] tags;
     private String exam;
+    private String banner;
 }

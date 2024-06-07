@@ -28,6 +28,8 @@ public class SubjectEntity {
     private int duration;
     private String timetable;
 
+    private String banner;
+
     private long teacher_id;
     private boolean is_end = false;
     private boolean is_start = false;
@@ -38,7 +40,7 @@ public class SubjectEntity {
     }
 
     public SubjectEntity(String title, long teacher_id, String description, long time_exam_end, long time_start,
-                         String exam, String short_description, int duration, String timetable) {
+                         String exam, String short_description, int duration, String timetable, String banner) {
         this.title = title;
         this.teacher_id = teacher_id;
         this.description = description;
@@ -48,6 +50,7 @@ public class SubjectEntity {
         this.short_description = short_description;
         this.duration = duration;
         this.timetable = timetable;
+        this.banner = banner;
     }
 
     public SubjectEntity(SubjectCreate subject, long teacher_id) {
@@ -59,7 +62,8 @@ public class SubjectEntity {
                 subject.getExam(),
                 subject.getShort_description(),
                 subject.getDuration(),
-                subject.getTimetable());
+                subject.getTimetable(),
+                subject.getBanner());
     }
 
     public boolean educationProcess() {

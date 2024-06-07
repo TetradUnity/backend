@@ -17,7 +17,7 @@ public class GradeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    private double value = 0;
+    private double value = -1;
     private long student_id;
     private long subject_id;
     private long parent_id;
@@ -32,7 +32,9 @@ public class GradeEntity {
         this.parent_id = parent_id;
         this.content = content;
         this.time_edited_end = time_edited_end;
-        date = auto_date ? date : 0;
+        if (!auto_date) {
+            this.date = 0;
+        }
     }
 
     public GradeEntity(long student_id, long subject_id, long parent_id, long time_edited_end, boolean auto_date) {
@@ -40,6 +42,8 @@ public class GradeEntity {
         this.subject_id = subject_id;
         this.parent_id = parent_id;
         this.time_edited_end = time_edited_end;
-        date = auto_date ? date : 0;
+        if (!auto_date) {
+            this.date = 0;
+        }
     }
 }

@@ -1,21 +1,19 @@
 package com.tetradunity.server;
 
-import com.tetradunity.server.dataInitializers.DotenvPropertySource;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
+@PropertySource("classpath:.env")
 public class ServerApplication {
 
     public static void main(String[] args) {
-        SpringApplication application = new SpringApplication(ServerApplication.class);
-        application.addInitializers(new DotenvPropertySource());
-        application.run(args);
+        SpringApplication.run(ServerApplication.class, args);
     }
 
     @Bean

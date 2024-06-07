@@ -6,6 +6,7 @@ import com.tetradunity.server.entities.SubjectEntity;
 import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.models.InfoEducationMaterial;
 import com.tetradunity.server.models.Role;
+import com.tetradunity.server.models.StringModel;
 import com.tetradunity.server.repositories.EducationMaterialRepository;
 import com.tetradunity.server.repositories.GradeRepository;
 import com.tetradunity.server.repositories.StudentSubjectRepository;
@@ -137,8 +138,8 @@ public class EducationController {
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping("get-education-material")
-    public ResponseEntity<Object> getEducationMaterial(HttpServletRequest req, @RequestParam long education_id) {
+    @PostMapping("open-education-material")
+    public ResponseEntity<Object> openEducationMaterial(HttpServletRequest req, @RequestParam long education_id) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {
@@ -153,9 +154,13 @@ public class EducationController {
 
         long subject_id = educationMaterial.getSubject_id();
 
+        long user_id = user.getId();
+
         SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
-        long user_id = user.getId();
+        if (subject == null) {
+            return ResponseService.failed();
+        }
 
         if (user.getRole() != Role.CHIEF_TEACHER &&
                 user_id != subject.getTeacher_id() &&
@@ -187,17 +192,100 @@ public class EducationController {
                 int duration = JSONService.getTime(content);
 
                 if (grade == null) {
-                    grade = new GradeEntity(0, user_id, subject_id, education_id,
+                    new GradeEntity(user_id, subject_id, education_id,
                             current_time + duration, false);
+                } else {
+                    if (current_time < grade.getTime_edited_end()) {
+                        return ResponseService.failed("no_access_now");
+                    }
+                    int attempt = grade.getAttempt();
+                    if (attempt >= JSONService.getCount_attempt(content)) {
+                        return ResponseService.failed("too_many_tries");
+                    }
+                    grade.setAttempt(++attempt);
+                    grade.setTime_edited_end(current_time + duration);
+                    grade.setContent("");
+                    gradeRepository.save(grade);
                 }
                 response.put("ok", true);
                 response.put("test", JSONService.getQuestions(content));
                 return ResponseEntity.ok().body(response);
-
+            } else {
+                response.put("test", content);
             }
         } else {
-            return ResponseEntity.ok().contentType(MediaType.valueOf(storageService.determineFileType(content))).body(storageService.downloadFile(content));
+            return ResponseEntity.ok().contentType(MediaType.valueOf(storageService.determineFileType(content)))
+                    .body(storageService.downloadFile(content));
         }
         return ResponseService.failed();
     }
+
+    @PostMapping("send-response")
+    public ResponseEntity<Object> openEducationMaterial(HttpServletRequest req, @RequestParam long education_id,
+                                                        @RequestBody StringModel requestModel) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+
+        EducationMaterialEntity educationMaterial = educationMaterialRepository.findById(education_id).orElse(null);
+
+        if (educationMaterial == null) {
+            return ResponseService.notFound();
+        }
+
+        long subject_id = educationMaterial.getSubject_id();
+        long user_id = user.getId();
+
+        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        if (studentSubjectRepository.findByStudentIdAndSubjectId(user_id, subject_id).orElse(null) == null) {
+            return ResponseService.failed("no_permission");
+        }
+        String request = requestModel.getModel();
+
+        GradeEntity grade = gradeRepository.findByStudent_idAndParent_id(user_id, education_id).orElse(null);
+
+        if (grade == null) {
+            return ResponseService.failed();
+        }
+
+        long current_time = System.currentTimeMillis();
+
+        if (grade.getTime_edited_end() < System.currentTimeMillis()) {
+            return ResponseService.failed("late");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        if (educationMaterial.is_test()) {
+            double result;
+            try {
+                result = JSONService.checkAnswers(educationMaterial.getContent(), request);
+            } catch (RuntimeException ex) {
+                return ResponseService.failed();
+            }
+            grade.setContent(request);
+            grade.setValue(result);
+            grade.setTime_edited_end(current_time);
+            grade.setDate(current_time);
+            gradeRepository.save(grade);
+            response.put("ok", true);
+            response.put("result", result);
+        } else {
+            if (JSONService.checkFiles(request)) {
+                gradeRepository.save(new GradeEntity(user_id, subject_id, education_id,
+                        current_time, false));
+                response.put("ok", true);
+            }
+        }
+        return ResponseEntity.ok().body(response);
+    }
+
+    
 }

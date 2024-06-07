@@ -44,13 +44,15 @@ public class JSONService {
         }
     }
 
-    public static String getQuestions(String testStr) throws RuntimeException {
+    public static String getQuestions(String testStr, boolean withGeneralInfo) throws RuntimeException {
         if (testStr == null) {
             return null;
         }
         JSONArray test = new JSONArray(testStr);
         JSONArray questions = new JSONArray();
-        questions.put(test.getJSONObject(0));
+        if (withGeneralInfo) {
+            questions.put(test.getJSONObject(0));
+        }
         JSONObject question;
         JSONObject temp;
         JSONArray answers;
@@ -85,7 +87,7 @@ public class JSONService {
     }
 
     public static String getQuestionsWithYourAnswers(String testStr, String answersStr) throws RuntimeException {
-        JSONArray questions = new JSONArray(getQuestions(testStr));
+        JSONArray questions = new JSONArray(getQuestions(testStr, false));
         JSONArray answers = new JSONArray(answersStr);
         JSONArray result = new JSONArray();
         JSONObject question;

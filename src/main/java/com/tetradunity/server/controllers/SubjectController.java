@@ -59,8 +59,8 @@ public class SubjectController {
             UserEntity teacher = userRepository.findByEmail(subject.getTeacher_email()).orElse(null);
 
 
-            if (System.currentTimeMillis() + 259_199_999 > subject.getTime_exam_end() &&
-                    subject.getTime_exam_end() + 86_399_999 > subject.getTime_start() &&
+            if (System.currentTimeMillis() + 259_199_999 > subject.getTime_exam_end() ||
+                    subject.getTime_exam_end() + 86_399_999 > subject.getTime_start() ||
                     subject.getDuration() < 259_199_999) {
                 return ResponseService.failed("error_time");
             }
@@ -81,8 +81,15 @@ public class SubjectController {
                 }
             }
 
-            if (subject.getDescription() == null) {
-                subject.setDescription("");
+
+            if (subject.getDescription() != null) {
+                String description;
+                subject.setDescription(description = subject.getDescription().trim());
+                if (description.length() < 50) {
+                    return ResponseService.failed();
+                }
+            } else {
+                return ResponseService.failed();
             }
 
             SubjectEntity subjectEntity = subjectRepository.save(new SubjectEntity(subject, teacher.getId()));
@@ -258,7 +265,7 @@ public class SubjectController {
     }
 
     @PostMapping("start-exam")
-    public ResponseEntity<Object> createLinkExam(@RequestParam(name = "uid", required = true) String uid) {
+    public ResponseEntity<Object> createLinkExam(@RequestParam String uid) {
         if (uid == null) {
             return ResponseService.failed();
         }
@@ -283,7 +290,7 @@ public class SubjectController {
         resultExamRepository.save(resultExam);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("exam", JSONService.getQuestions(subject.getExam()));
+        response.put("exam", JSONService.getQuestions(subject.getExam(), true));
         response.put("ok", true);
         return ResponseEntity.ok().body(response);
     }

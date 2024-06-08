@@ -223,7 +223,7 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        long subject_id = request.getSubjectId();
+        long subject_id = request.getSubject_id();
 
         SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 

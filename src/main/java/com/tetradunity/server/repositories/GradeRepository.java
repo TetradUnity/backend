@@ -10,8 +10,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface GradeRepository extends CrudRepository<GradeEntity, Long> {
-    @Query(value = "SELECT * FROM grades WHERE :student_id = student_id AND :parent_id = parent_id", nativeQuery = true)
-    Optional<GradeEntity> findByStudentAndParent(long student_id, long parent_id);
+    @Query(value = "SELECT * FROM grades g " +
+            "WHERE :student_id = student_id " +
+            "AND :parent_id = parent_id " +
+            "AND CASE " +
+            "    WHEN :parent_type = 'conference' " +
+            "    THEN (SELECT COUNT(*) = 1 FROM conferences c WHERE c.id = :parent_id) " +
+            "    ELSE (SELECT COUNT(*) = 1 FROM education_materials e WHERE e.id = :parent_id) " +
+            "END", nativeQuery = true)
+    Optional<GradeEntity> findByStudentAndParent(long student_id, long parent_id, String parent_type);
 
     @Query(value = "SELECT g.id, u.first_name, u.last_name, u.avatar, g.value, g.time_edited_end as dispatch_time, g.attempt " +
             " FROM grades g " +

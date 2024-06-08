@@ -31,7 +31,7 @@ public class StorageController {
         Role role;
 
         if (user == null) {
-            return ResponseService.failed();
+            return ResponseService.unauthorized();
         }
         role = user.getRole();
 

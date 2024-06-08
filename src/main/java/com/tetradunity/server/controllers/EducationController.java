@@ -178,7 +178,7 @@ public class EducationController {
 
         if (educationMaterial.is_test()) {
             if (user.getRole() == Role.STUDENT) {
-                GradeEntity grade = gradeRepository.findByStudentAndParent(user_id, education_id).orElse(null);
+                GradeEntity grade = gradeRepository.findByStudentAndParent(user_id, education_id, "education_material").orElse(null);
                 if (deadline < current_time) {
                     if (grade == null) {
                         return ResponseService.failed();
@@ -256,7 +256,7 @@ public class EducationController {
         }
         String homework = requestModel.getModel();
 
-        GradeEntity grade = gradeRepository.findByStudentAndParent(user_id, education_id).orElse(null);
+        GradeEntity grade = gradeRepository.findByStudentAndParent(user_id, education_id, "education_material").orElse(null);
 
         long current_time = System.currentTimeMillis();
 
@@ -366,47 +366,6 @@ public class EducationController {
         } else {
             response.put("files", content);
         }
-        return ResponseEntity.ok().body(response);
-    }
-
-    @PostMapping("rate")
-    public ResponseEntity<Object> rate(HttpServletRequest req, @RequestParam double result, @RequestParam long grade_id) {
-        UserEntity user = AuthUtil.authorizedUser(req);
-
-        if (user == null) {
-            return ResponseService.unauthorized();
-        }
-
-        GradeEntity grade = gradeRepository.findById(grade_id).orElse(null);
-
-        if (grade == null) {
-            return ResponseService.failed();
-        }
-
-        SubjectEntity subject = subjectRepository.findById(grade.getSubject_id()).orElse(null);
-
-        if (subject == null) {
-            return ResponseService.failed();
-        }
-
-        if (subject.getTeacher_id() != user.getId()) {
-            return ResponseService.failed("no_permission");
-        }
-
-        EducationMaterialEntity educationMaterial = educationMaterialRepository.findById(grade.getParent_id()).orElse(null);
-
-        long current_time = System.currentTimeMillis();
-        long deadline = educationMaterial.getDeadline();
-
-        if (deadline + 604_800_000 < current_time || deadline > current_time) {
-            return ResponseService.failed("no_permission");
-        }
-
-        grade.setDate(current_time);
-        grade.setValue(result);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("ok", true);
         return ResponseEntity.ok().body(response);
     }
 }

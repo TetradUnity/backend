@@ -16,7 +16,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    link-exam: https://exam/
+    link-exam: ${LINK_EXAM}
+    link-recovery-password: ${LINK_RECOVERY_PASSWORD}
     username: ${SERVER_GMAIL}
     password: ${SERVER_GMAIL_PASSWORD}
     properties:

@@ -46,4 +46,15 @@ public class GradeEntity {
             this.date = 0;
         }
     }
+
+    public GradeEntity(long student_id, long subject_id, long parent_id, long time_edited_end, boolean auto_date, double value) {
+        this.student_id = student_id;
+        this.subject_id = subject_id;
+        this.parent_id = parent_id;
+        this.time_edited_end = time_edited_end;
+        if (!auto_date) {
+            this.date = 0;
+        }
+        this.value = value;
+    }
 }

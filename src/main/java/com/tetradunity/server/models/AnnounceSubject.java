@@ -26,6 +26,8 @@ public class AnnounceSubject {
     private String teacher_first_name;
     private String teacher_last_name;
 
+    private String banner;
+
     public AnnounceSubject(AnnounceSubjectProjection subject, String teacher_first_name, String teacher_last_name,
                            String[] tags) {
         this(
@@ -37,7 +39,8 @@ public class AnnounceSubject {
                 subject.getShort_description(),
                 tags,
                 teacher_first_name,
-                teacher_last_name
+                teacher_last_name,
+                subject.getBanner()
         );
     }
 }

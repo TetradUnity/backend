@@ -1,10 +1,14 @@
 package com.tetradunity.server.controllers;
 
+import com.tetradunity.server.entities.PasswordRecoveryRequest;
 import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.models.Role;
+import com.tetradunity.server.models.StringModel;
 import com.tetradunity.server.models.UserWithTokens;
+import com.tetradunity.server.repositories.PasswordRecoveryRequestRepository;
 import com.tetradunity.server.repositories.UserRepository;
 import com.tetradunity.server.services.CheckValidService;
+import com.tetradunity.server.services.MailService;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.utils.AuthUtil;
 import com.tetradunity.server.utils.JwtUtil;
@@ -19,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/authorization")
@@ -26,6 +32,10 @@ public class AuthController {
 
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    MailService mailService;
+    @Autowired
+    PasswordRecoveryRequestRepository passwordRecoveryRequestRepository;
 
     private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -103,5 +113,69 @@ public class AuthController {
             return ResponseEntity.ok().body(response);
         }
         return ResponseService.failed("no_permission");
+    }
+    @PostMapping("forgot-password")
+    public ResponseEntity<Object> forgotPassword(@RequestParam String email){
+        UserEntity user = userRepository.findByEmail(email).orElse(null);
+
+        if(user == null){
+            return ResponseService.failed();
+        }
+
+        PasswordRecoveryRequest request = passwordRecoveryRequestRepository.findByEmail(email).orElse(null);
+
+        if(request == null){
+            request = passwordRecoveryRequestRepository.save(new PasswordRecoveryRequest(email));
+        }
+        else{
+            passwordRecoveryRequestRepository.delete(request);
+            request = passwordRecoveryRequestRepository.save(new PasswordRecoveryRequest(email));
+        }
+
+        mailService.sendRecoveryPassword(email, user.getFirst_name(), request.getUid().toString());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("recovery-password/{uid}")
+    public ResponseEntity<Object> recoveryPassword(@PathVariable String uid, @RequestBody StringModel new_password){
+        PasswordRecoveryRequest request = passwordRecoveryRequestRepository.findByUid(UUID.fromString(uid)).orElse(null);
+
+        if(request == null){
+            return ResponseService.failed();
+        }
+
+        if(request.isActual()){
+            UserEntity user = userRepository.findByEmail(request.getEmail()).orElse(null);
+
+            if(user == null){
+                return ResponseService.failed();
+            }
+
+            String password = new_password.getModel();
+
+            if (password.length() < 6) {
+                return ResponseService.failed("password_very_short");
+            }
+            if (password.length() > 32) {
+                return ResponseService.failed("password_very_long");
+            }
+
+            Pattern pattern = Pattern.compile("^[\\S]+$");
+
+            if (!pattern.matcher(password).matches()) {
+                return ResponseService.failed("incorrect_password");
+            }
+            user.setPassword(password);
+            userRepository.save(user);
+        }
+
+        passwordRecoveryRequestRepository.delete(request);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
     }
 }

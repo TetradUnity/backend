@@ -12,4 +12,6 @@ public interface AnnounceSubjectProjection {
     long getTime_exam_end();
 
     long getTime_start();
+
+    String getBanner();
 }

@@ -23,6 +23,8 @@ public class DetailsAnnounceSubject {
 
     private long teacher_id;
 
+    private String banner;
+
     public DetailsAnnounceSubject() {
     }
 
@@ -31,7 +33,7 @@ public class DetailsAnnounceSubject {
         this(
                 subject.getTime_exam_end(), subject.getTime_start(), subject.getTitle(),
                 subject.getDescription(), duration_exam, subject.getDuration(), subject.getTimetable(),
-                teacher_first_name, teacher_last_name, subject.getTeacher_id()
+                teacher_first_name, teacher_last_name, subject.getTeacher_id(), subject.getBanner()
         );
     }
 }

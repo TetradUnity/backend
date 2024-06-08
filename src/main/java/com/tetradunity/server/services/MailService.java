@@ -23,12 +23,15 @@ public class MailService {
     private final Configuration configuration;
     private final JavaMailSender mailSender;
     private final String linkExam;
+    private final String linkRecoveryPassword;
 
     @Autowired
-    public MailService(Configuration configuration, JavaMailSender mailSender, @Value("${spring.mail.link-exam}") String linkExam) {
+    public MailService(Configuration configuration, JavaMailSender mailSender,
+                       @Value("${spring.mail.link-exam}") String linkExam, @Value("${spring.mail.link-recovery-password}") String linkRecoveryPassword) {
         this.configuration = configuration;
         this.mailSender = mailSender;
         this.linkExam = linkExam;
+        this.linkRecoveryPassword = linkRecoveryPassword;
     }
 
     @SneakyThrows
@@ -51,7 +54,6 @@ public class MailService {
         model.put("last_name", last_name);
         model.put("subject_title", subject_title);
         model.put("link_exam", link);
-        model.put("additional_content", "Ваш додатковий контент тут");
 
         StringWriter writer = new StringWriter();
         configuration.getTemplate("startExam.ftlh")
@@ -79,7 +81,6 @@ public class MailService {
         model.put("first_name", first_name);
         model.put("last_name", last_name);
         model.put("subject_title", subject_title);
-        model.put("additional_content", "Ваш додатковий контент тут");
 
         StringWriter writer = new StringWriter();
         configuration.getTemplate("examComplete.ftlh")
@@ -107,7 +108,6 @@ public class MailService {
         model.put("first_name", first_name);
         model.put("last_name", last_name);
         model.put("subject_title", subject_title);
-        model.put("additional_content", "Ваш додатковий контент тут");
 
         StringWriter writer = new StringWriter();
         configuration.getTemplate("examFail.ftlh")
@@ -136,10 +136,34 @@ public class MailService {
         model.put("last_name", last_name);
         model.put("subject_title", subject_title);
         model.put("password", password);
-        model.put("additional_content", "Ваш додатковий контент тут");
 
         StringWriter writer = new StringWriter();
         configuration.getTemplate("auth.ftlh")
+                .process(model, writer);
+        return writer.toString();
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @SneakyThrows
+    public void sendRecoveryPassword(String email, String first_name, String uid) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
+                false,
+                "UTF-8");
+        helper.setSubject("Recovery password");
+        helper.setTo(email);
+        String emailContent = getRecoveryPassword(first_name, linkRecoveryPassword + uid);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getRecoveryPassword(String first_name, String link) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("first_name", first_name);
+        model.put("link", link);
+
+        StringWriter writer = new StringWriter();
+        configuration.getTemplate("recoveryPassword.ftlh")
                 .process(model, writer);
         return writer.toString();
     }

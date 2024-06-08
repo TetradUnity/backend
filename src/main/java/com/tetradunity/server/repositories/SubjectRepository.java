@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
     Optional<SubjectEntity> findById(long id);
 
-    @Query(value = "SELECT s.id, s.title, s.teacher_id, s.short_description, s.time_exam_end, s.time_start " +
+    @Query(value = "SELECT s.id, s.title, s.teacher_id, s.short_description, s.time_exam_end, s.time_start, s.banner " +
             "FROM subjects s " +
             "LEFT JOIN ( " +
             "    SELECT subject_id " +

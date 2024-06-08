@@ -109,7 +109,7 @@ public class StorageService {
 
     private boolean checkExtensionImage(String extension) {
         return switch (extension) {
-            case "jpg", "jpeg", "png", "bmp" -> true;
+            case ".jpg", ".jpeg", ".png", ".bmp" -> true;
             default -> false;
         };
     }

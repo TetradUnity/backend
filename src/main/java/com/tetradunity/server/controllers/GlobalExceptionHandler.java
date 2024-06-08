@@ -5,6 +5,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -13,8 +14,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Object> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Object> handlerMissingServletRequestParameterException(MissingServletRequestParameterException e) {
         return ResponseService.failed("incorrect_data");
     }
 

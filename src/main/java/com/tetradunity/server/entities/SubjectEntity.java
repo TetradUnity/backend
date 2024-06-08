@@ -25,7 +25,7 @@ public class SubjectEntity {
     private String description;
 
     private String short_description;
-    private int duration;
+    private long duration;
     private String timetable;
 
     private String banner;
@@ -40,7 +40,7 @@ public class SubjectEntity {
     }
 
     public SubjectEntity(String title, long teacher_id, String description, long time_exam_end, long time_start,
-                         String exam, String short_description, int duration, String timetable, String banner) {
+                         String exam, String short_description, long duration, String timetable, String banner) {
         this.title = title;
         this.teacher_id = teacher_id;
         this.description = description;

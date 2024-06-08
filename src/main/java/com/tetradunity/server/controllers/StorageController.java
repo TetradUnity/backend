@@ -61,13 +61,4 @@ public class StorageController {
     public ResponseEntity<Object> downloadFile(@RequestParam("path") String path) {
         return ResponseEntity.ok().contentType(MediaType.valueOf(storageService.determineFileType(path))).body(storageService.downloadFile(path));
     }
-
-    @DeleteMapping("/delete")
-    public ResponseEntity<Object> deleteFile(@RequestParam("path") String path) {
-        storageService.deleteFile(path);
-        Map<String, Object> response = new HashMap<>();
-        response.put("ok", true);
-        return ResponseEntity.ok(response);
-    }
-
 }

@@ -15,7 +15,7 @@ public class SubjectCreate {
     private String title;
     private String description;
     private String short_description;
-    private int duration;
+    private long duration;
     private String timetable;
     private String teacher_email;
     private String[] tags;

@@ -30,12 +30,9 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
             "AND ((:has_exam IS NULL) OR (:has_exam = true AND s.exam <> '') OR (:has_exam = false AND s.exam = '')) " +
             "AND (:first_name_teacher IS NULL OR u.first_name LIKE :first_name_teacher%) " +
             "AND (:last_name_teacher IS NULL OR u.last_name LIKE :last_name_teacher%) " +
-            "ORDER (BY CASE " +
-            "WHEN :asc THEN s.title ASC " +
-            "ELSE s.title DESC END)" +
             "LIMIT 10 OFFSET :pos", nativeQuery = true)
     List<AnnounceSubjectProjection> findAccessAnnounceSubject(int pos, String title, List<String> tags, int count_tags, Boolean has_exam,
-                                                              String first_name_teacher, String last_name_teacher, boolean asc);
+                                                              String first_name_teacher, String last_name_teacher);
 
     @Query(value = "SELECT COUNT(*) " +
             "FROM subjects s " +
@@ -56,12 +53,12 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
 
     default List<AnnounceSubjectProjection> findAccessAnnounceSubject(int pos, SubjectFilter filter) {
         if (filter == null) {
-            return findAccessAnnounceSubject(pos, null, new ArrayList<String>(), 0, null, null, null, true);
+            return findAccessAnnounceSubject(pos, null, new ArrayList<String>(), 0, null, null, null);
         }
 
         List<String> tags = filter.getTags();
         return findAccessAnnounceSubject(pos, filter.getTitle(), tags == null ? new ArrayList<String>() : tags,
-                tags == null ? 0 : tags.size(), filter.getHas_exam(), filter.getFirst_name_teacher(), filter.getLast_name_teacher(), filter.isAscent());
+                tags == null ? 0 : tags.size(), filter.getHas_exam(), filter.getFirst_name_teacher(), filter.getLast_name_teacher());
     }
 
     default int countAnnounceSubject(SubjectFilter filter) {

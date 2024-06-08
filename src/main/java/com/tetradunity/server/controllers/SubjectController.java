@@ -86,7 +86,7 @@ public class SubjectController {
             if (subject.getDescription() != null) {
                 String description;
                 subject.setDescription(description = subject.getDescription().trim());
-                if (description.length() < 50) {
+                if (description.length() < 100) {
                     return ResponseService.failed();
                 }
             } else {

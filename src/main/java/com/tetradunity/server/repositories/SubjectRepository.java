@@ -1,6 +1,7 @@
 package com.tetradunity.server.repositories;
 
 import com.tetradunity.server.entities.SubjectEntity;
+import com.tetradunity.server.models.CalendarFilter;
 import com.tetradunity.server.models.SubjectFilter;
 import com.tetradunity.server.projections.AnnounceSubjectProjection;
 import org.springframework.data.jpa.repository.Query;
@@ -25,10 +26,16 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
             ") t ON s.id = t.subject_id " +
             "JOIN users u ON u.id = s.teacher_id " +
             "WHERE (s.time_exam_end > UNIX_TIMESTAMP() * 1000) " +
+            "AND (:title IS NULL OR s.title LIKE %:title%) " +
             "AND ((:has_exam IS NULL) OR (:has_exam = true AND s.exam <> '') OR (:has_exam = false AND s.exam = '')) " +
-            "AND (:email_teacher IS NULL OR u.email LIKE :email_teacher%) " +
+            "AND (:first_name_teacher IS NULL OR u.first_name LIKE :first_name_teacher%) " +
+            "AND (:last_name_teacher IS NULL OR u.last_name LIKE :last_name_teacher%) " +
+            "ORDER (BY CASE " +
+            "WHEN :asc THEN s.title ASC " +
+            "ELSE s.title DESC END)" +
             "LIMIT 10 OFFSET :pos", nativeQuery = true)
-    List<AnnounceSubjectProjection> findAccessAnnounceSubject(int pos, List<String> tags, int count_tags, Boolean has_exam, String email_teacher);
+    List<AnnounceSubjectProjection> findAccessAnnounceSubject(int pos, String title, List<String> tags, int count_tags, Boolean has_exam,
+                                                              String first_name_teacher, String last_name_teacher, boolean asc);
 
     @Query(value = "SELECT COUNT(*) " +
             "FROM subjects s " +
@@ -41,26 +48,30 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
             ") t ON s.id = t.subject_id " +
             "JOIN users u ON u.id = s.teacher_id " +
             "WHERE (s.time_exam_end > UNIX_TIMESTAMP() * 1000) " +
+            "AND (:title IS NULL OR s.title LIKE %:title%) " +
             "AND ((:has_exam IS NULL) OR (:has_exam = true AND s.exam <> '') OR (:has_exam = false AND s.exam = '')) " +
-            "AND (:email_teacher IS NULL OR u.email LIKE :email_teacher%)", nativeQuery = true)
-    int countAnnounceSubject(List<String> tags, int count_tags, Boolean has_exam, String email_teacher);
+            "AND (:first_name_teacher IS NULL OR u.first_name LIKE :first_name_teacher%) " +
+            "AND (:last_name_teacher IS NULL OR u.last_name LIKE :last_name_teacher%) ", nativeQuery = true)
+    int countAnnounceSubject(String title, List<String> tags, int count_tags, Boolean has_exam, String first_name_teacher, String last_name_teacher);
 
     default List<AnnounceSubjectProjection> findAccessAnnounceSubject(int pos, SubjectFilter filter) {
         if (filter == null) {
-            return findAccessAnnounceSubject(pos, new ArrayList<String>(), 0, null, null);
+            return findAccessAnnounceSubject(pos, null, new ArrayList<String>(), 0, null, null, null, true);
         }
 
         List<String> tags = filter.getTags();
-        return findAccessAnnounceSubject(pos, tags == null ? new ArrayList<String>() : tags, tags == null ? 0 : tags.size(), filter.getHas_exam(), filter.getEmail_teacher());
+        return findAccessAnnounceSubject(pos, filter.getTitle(), tags == null ? new ArrayList<String>() : tags,
+                tags == null ? 0 : tags.size(), filter.getHas_exam(), filter.getFirst_name_teacher(), filter.getLast_name_teacher(), filter.isAscent());
     }
 
     default int countAnnounceSubject(SubjectFilter filter) {
         double res;
         if (filter == null) {
-            res = countAnnounceSubject(new ArrayList<String>(), 0, null, null) / 10d;
+            res = countAnnounceSubject(null, new ArrayList<String>(), 0, null, null, null) / 10d;
         } else {
             List<String> tags = filter.getTags();
-            res = countAnnounceSubject(tags == null ? new ArrayList<String>() : tags, tags == null ? 0 : tags.size(), filter.getHas_exam(), filter.getEmail_teacher()) / 10d;
+            res = countAnnounceSubject(filter.getTitle(), tags == null ? new ArrayList<String>() : tags, tags == null ? 0 : tags.size(),
+                    filter.getHas_exam(), filter.getFirst_name_teacher(), filter.getLast_name_teacher()) / 10d;
         }
         return res > (int) res ? (int) res + 1 : (int) res;
     }

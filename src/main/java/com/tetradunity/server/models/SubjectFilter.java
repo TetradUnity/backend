@@ -14,5 +14,8 @@ import java.util.List;
 public class SubjectFilter {
     private List<String> tags;
     private Boolean has_exam;
-    private String email_teacher;
+    private String first_name_teacher;
+    private String last_name_teacher;
+    private String title;
+    private boolean ascent = true;
 }

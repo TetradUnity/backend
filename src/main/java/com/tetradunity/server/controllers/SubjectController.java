@@ -61,9 +61,9 @@ public class SubjectController {
             UserEntity teacher = userRepository.findByEmail(subject.getTeacher_email()).orElse(null);
 
 
-            if (System.currentTimeMillis() + 259_199_999 > subject.getTime_exam_end() ||
+            if (System.currentTimeMillis() + 25_920_000 > subject.getTime_exam_end() ||
                     subject.getTime_exam_end() + 86_399_999 > subject.getTime_start() ||
-                    subject.getDuration() < 259_199_999) {
+                    subject.getDuration() < 25_920_000) {
                 return ResponseService.failed("error_time");
             }
 

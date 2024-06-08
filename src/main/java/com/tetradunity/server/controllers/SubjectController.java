@@ -32,6 +32,8 @@ public class SubjectController {
     private ResultExamRepository resultExamRepository;
     @Autowired
     private MailService mailService;
+    @Autowired
+    private StorageService storageService;
 
     private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -81,7 +83,6 @@ public class SubjectController {
                 }
             }
 
-
             if (subject.getDescription() != null) {
                 String description;
                 subject.setDescription(description = subject.getDescription().trim());
@@ -92,10 +93,22 @@ public class SubjectController {
                 return ResponseService.failed();
             }
 
+            String banner = subject.getBanner();
+
+            Random rand = new Random();
+
+            if (banner == null) {
+                subject.setBanner("banners/base" + rand.nextInt(1, 5));
+            } else {
+                if (storageService.downloadFile("banners/" + banner) != null) {
+                    subject.setBanner(banner);
+                } else {
+                    subject.setBanner("banners/base" + rand.nextInt(1, 5));
+                }
+            }
             SubjectEntity subjectEntity = subjectRepository.save(new SubjectEntity(subject, teacher.getId()));
 
             long id = subjectEntity.getId();
-
 
             for (String tag : tags) {
                 if (tagRepository.findByTag(tag).isEmpty()) {
@@ -163,8 +176,6 @@ public class SubjectController {
         int pos = (page - 1) * 10;
 
         subjectsAnnounce = subjectRepository.findAccessAnnounceSubject(pos, filter);
-
-        System.out.println(subjectsAnnounce);
 
         List<AnnounceSubject> subjects = new ArrayList<>();
         List<String> tags;

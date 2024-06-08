@@ -16,7 +16,6 @@ public class EducationMaterialEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-
     private String title;
     private long subject_id;
     private boolean is_test;

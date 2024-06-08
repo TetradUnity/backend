@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
 import java.util.UUID;
@@ -49,7 +51,7 @@ public class StorageService {
         return new CustomMultipartFile(fileName, fileName, "text/plain", contentBytes);
     }
 
-    private String getFileExtension(String fileName) {
+    public String getFileExtension(String fileName) {
         if (fileName != null && fileName.lastIndexOf(".") != -1) {
             return fileName.substring(fileName.lastIndexOf("."));
         } else {
@@ -75,9 +77,8 @@ public class StorageService {
         try {
             return IOUtils.toByteArray(inputStream);
         } catch (IOException e) {
-            e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     private boolean doesFolderExist(String folderName) {
@@ -96,7 +97,7 @@ public class StorageService {
     }
 
 
-    private File convertMultiPartFileToFile(MultipartFile file) {
+    public File convertMultiPartFileToFile(MultipartFile file) {
         File convertedFile = new File(file.getOriginalFilename());
         try (FileOutputStream fos = new FileOutputStream(convertedFile)) {
             fos.write(file.getBytes());
@@ -104,5 +105,29 @@ public class StorageService {
             return null;
         }
         return convertedFile;
+    }
+
+    private boolean checkExtensionImage(String extension) {
+        return switch (extension) {
+            case "jpg", "jpeg", "png", "bmp" -> true;
+            default -> false;
+        };
+    }
+
+    public double findRatio(MultipartFile file) {
+        String filename = file.getOriginalFilename();
+        String extension = getFileExtension(filename);
+        if (checkExtensionImage(extension)) {
+            try {
+                BufferedImage image = ImageIO.read(convertMultiPartFileToFile(file));
+                if (image != null) {
+                    return (double) image.getWidth() / image.getHeight();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return 0;
+        }
+        return 0;
     }
 }

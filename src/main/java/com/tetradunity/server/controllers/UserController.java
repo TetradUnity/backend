@@ -8,6 +8,7 @@ import com.tetradunity.server.models.User;
 import com.tetradunity.server.repositories.UserRepository;
 import com.tetradunity.server.services.CheckValidService;
 import com.tetradunity.server.services.ResponseService;
+import com.tetradunity.server.services.StorageService;
 import com.tetradunity.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,8 @@ public class UserController {
 
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    StorageService storageService;
 
     private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -129,6 +133,7 @@ public class UserController {
         String last_name = editedUser.getLast_name();
         String password = editedUser.getPassword();
         String oldPassword = editedUser.getOldPassword();
+        String avatar = editedUser.getAvatar();
 
         if (password != null) {
             if (passwordEncoder.matches(oldPassword, user.getPassword())) {
@@ -148,6 +153,12 @@ public class UserController {
 
         if (last_name != null) {
             user.setEmail(email);
+        }
+
+        if (avatar != null || avatar.trim().isEmpty()) {
+            if (storageService.downloadFile("avatars/" + avatar) != null) {
+                user.setAvatar(avatar);
+            }
         }
 
         userRepository.save(user);

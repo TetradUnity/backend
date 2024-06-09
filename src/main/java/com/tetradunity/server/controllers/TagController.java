@@ -2,7 +2,7 @@ package com.tetradunity.server.controllers;
 
 import com.tetradunity.server.entities.TagEntity;
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.Role;
+import com.tetradunity.server.models.general.Role;
 import com.tetradunity.server.repositories.TagRepository;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.utils.AuthUtil;

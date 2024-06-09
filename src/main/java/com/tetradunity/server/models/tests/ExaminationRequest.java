@@ -1,4 +1,4 @@
-package com.tetradunity.server.models;
+package com.tetradunity.server.models.tests;
 
 import lombok.Getter;
 import lombok.Setter;

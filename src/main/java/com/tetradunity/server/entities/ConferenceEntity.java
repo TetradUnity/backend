@@ -1,8 +1,7 @@
 package com.tetradunity.server.entities;
 
-import com.tetradunity.server.models.ConferenceCreate;
+import com.tetradunity.server.models.events.ConferenceCreate;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

@@ -1,12 +1,11 @@
 package com.tetradunity.server.controllers;
 
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.EditedUser;
-import com.tetradunity.server.models.Role;
-import com.tetradunity.server.models.ShortInfoUser;
-import com.tetradunity.server.models.User;
+import com.tetradunity.server.models.users.EditedUser;
+import com.tetradunity.server.models.general.Role;
+import com.tetradunity.server.models.users.ShortInfoUser;
+import com.tetradunity.server.models.users.User;
 import com.tetradunity.server.repositories.UserRepository;
-import com.tetradunity.server.services.CheckValidService;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.services.StorageService;
 import com.tetradunity.server.utils.AuthUtil;
@@ -18,7 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

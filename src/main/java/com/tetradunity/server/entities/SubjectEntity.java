@@ -1,8 +1,6 @@
 package com.tetradunity.server.entities;
 
-import java.util.Date;
-
-import com.tetradunity.server.models.SubjectCreate;
+import com.tetradunity.server.models.subjects.SubjectCreate;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

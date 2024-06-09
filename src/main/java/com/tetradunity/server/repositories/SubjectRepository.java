@@ -1,14 +1,12 @@
 package com.tetradunity.server.repositories;
 
 import com.tetradunity.server.entities.SubjectEntity;
-import com.tetradunity.server.models.CalendarFilter;
-import com.tetradunity.server.models.SubjectFilter;
+import com.tetradunity.server.models.subjects.SubjectFilter;
 import com.tetradunity.server.projections.AnnounceSubjectProjection;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 

@@ -2,9 +2,9 @@ package com.tetradunity.server.controllers;
 
 import com.tetradunity.server.entities.PasswordRecoveryRequest;
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.Role;
-import com.tetradunity.server.models.StringModel;
-import com.tetradunity.server.models.UserWithTokens;
+import com.tetradunity.server.models.general.Role;
+import com.tetradunity.server.models.general.StringModel;
+import com.tetradunity.server.models.users.UserWithTokens;
 import com.tetradunity.server.repositories.PasswordRecoveryRequestRepository;
 import com.tetradunity.server.repositories.UserRepository;
 import com.tetradunity.server.services.CheckValidService;

@@ -1,4 +1,4 @@
-package com.tetradunity.server.models;
+package com.tetradunity.server.models.subjects;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

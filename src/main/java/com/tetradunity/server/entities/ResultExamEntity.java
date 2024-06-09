@@ -21,19 +21,21 @@ public class ResultExamEntity {
     private String last_name;
     private String answers;
     private double result;
-    private long end_time;
+    private long time_end;
+    private long time_start;
     private String uid;
     private int duration;
 
-    public ResultExamEntity(long parent_id, String email, String first_name, String last_name, String answers, int result, long end_time,
-                            String uid, int duration) {
+    public ResultExamEntity(long parent_id, String email, String first_name, String last_name, String answers, int result, long time_end,
+                            long time_start, String uid, int duration) {
         this.parent_id = parent_id;
         this.email = email;
         this.first_name = first_name;
         this.last_name = last_name;
         this.answers = answers;
         this.result = result;
-        this.end_time = end_time;
+        this.time_end = time_end;
+        this.time_start = time_start;
         this.uid = uid;
         this.duration = duration;
     }

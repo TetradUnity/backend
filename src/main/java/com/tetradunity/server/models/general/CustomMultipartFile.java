@@ -1,4 +1,4 @@
-package com.tetradunity.server.models;
+package com.tetradunity.server.models.general;
 
 import org.springframework.web.multipart.MultipartFile;
 

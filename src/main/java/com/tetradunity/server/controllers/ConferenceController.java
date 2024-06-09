@@ -4,7 +4,7 @@ import com.tetradunity.server.entities.ConferenceEntity;
 import com.tetradunity.server.entities.GradeEntity;
 import com.tetradunity.server.entities.SubjectEntity;
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.ConferenceCreate;
+import com.tetradunity.server.models.events.ConferenceCreate;
 import com.tetradunity.server.repositories.ConferenceRepository;
 import com.tetradunity.server.repositories.GradeRepository;
 import com.tetradunity.server.repositories.SubjectRepository;

@@ -1,6 +1,6 @@
 package com.tetradunity.server.entities;
 
-import com.tetradunity.server.models.Role;
+import com.tetradunity.server.models.general.Role;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

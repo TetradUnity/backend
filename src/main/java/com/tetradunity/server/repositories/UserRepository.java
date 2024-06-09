@@ -1,7 +1,6 @@
 package com.tetradunity.server.repositories;
 
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.Role;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;

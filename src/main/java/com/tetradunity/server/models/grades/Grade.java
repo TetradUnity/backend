@@ -1,4 +1,4 @@
-package com.tetradunity.server.models;
+package com.tetradunity.server.models.grades;
 
 import com.tetradunity.server.projections.GradeProjection;
 import lombok.AllArgsConstructor;

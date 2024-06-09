@@ -1,7 +1,7 @@
 package com.tetradunity.server.controllers;
 
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.Role;
+import com.tetradunity.server.models.general.Role;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.services.StorageService;
 import com.tetradunity.server.utils.AuthUtil;
@@ -37,9 +37,11 @@ public class StorageController {
 
         if (switch (folder) {
             case "avatars" -> storageService.findRatio(file) == 1;
-            case "banners" -> storageService.findRatio(file) == 4.04;
+            case "banners" -> between(storageService.findRatio(file), 4.03, 4.05);
             case "exam_resources" -> role == Role.CHIEF_TEACHER;
-            case "education_materials", "education_material_resources" -> role == Role.TEACHER;
+            case "education_materials" -> storageService.getFileExtension(file.getOriginalFilename()).equals(".html") &&
+                                                                                                        role == Role.TEACHER;
+            case "education_material_resources" -> role == Role.TEACHER;
             case "homework", "homework_resources" -> role == Role.STUDENT;
             default -> false;
         }) {
@@ -60,5 +62,9 @@ public class StorageController {
     @GetMapping("/download")
     public ResponseEntity<Object> downloadFile(@RequestParam("path") String path) {
         return ResponseEntity.ok().contentType(MediaType.valueOf(storageService.determineFileType(path))).body(storageService.downloadFile(path));
+    }
+
+    private boolean between(double num, double from, double till){
+        return num > from && num < till;
     }
 }

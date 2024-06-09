@@ -2,7 +2,7 @@ package com.tetradunity.server.utils;
 
 import com.tetradunity.server.entities.RefreshToken;
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.UserWithTokens;
+import com.tetradunity.server.models.users.UserWithTokens;
 import com.tetradunity.server.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;

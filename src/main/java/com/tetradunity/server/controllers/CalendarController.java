@@ -1,9 +1,9 @@
 package com.tetradunity.server.controllers;
 
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.CalendarFilter;
-import com.tetradunity.server.models.Event;
-import com.tetradunity.server.models.Grade;
+import com.tetradunity.server.models.calendars.CalendarFilter;
+import com.tetradunity.server.models.events.Event;
+import com.tetradunity.server.models.grades.Grade;
 import com.tetradunity.server.repositories.EducationMaterialRepository;
 import com.tetradunity.server.repositories.GradeRepository;
 import com.tetradunity.server.repositories.StudentSubjectRepository;

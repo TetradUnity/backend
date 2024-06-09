@@ -154,6 +154,7 @@ public class JSONService {
 
         int selectedRightAnswers;
         int selectedIncorrectAnswers;
+        int amountAnswers;
         int amountRightAnswers;
 
         int index;
@@ -163,9 +164,15 @@ public class JSONService {
             generalQuestion = exam.getJSONObject(i + 1);
             type = generalQuestion.getString("type");
 
+            amountAnswers = answer.length();
+
+            if(amountAnswers == 0){
+                continue;
+            }
+
             switch (type) {
                 case "ONE_ANSWER":
-                    if (answer.length() > 1) {
+                    if (amountAnswers > 1) {
                         throw new RuntimeException();
                     }
                 case "MULTY_ANSWER":

@@ -1,6 +1,5 @@
-package com.tetradunity.server.models;
+package com.tetradunity.server.models.users;
 
-import com.tetradunity.server.entities.RefreshToken;
 import com.tetradunity.server.entities.UserEntity;
 
 public class UserWithTokens {

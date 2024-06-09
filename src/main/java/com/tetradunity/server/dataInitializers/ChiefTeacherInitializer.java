@@ -1,7 +1,7 @@
 package com.tetradunity.server.dataInitializers;
 
 import com.tetradunity.server.entities.UserEntity;
-import com.tetradunity.server.models.Role;
+import com.tetradunity.server.models.general.Role;
 import com.tetradunity.server.repositories.UserRepository;
 import com.tetradunity.server.services.MailService;
 import org.springframework.beans.factory.annotation.Autowired;

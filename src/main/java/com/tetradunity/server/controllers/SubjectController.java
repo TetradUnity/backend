@@ -1,7 +1,11 @@
 package com.tetradunity.server.controllers;
 
 import com.tetradunity.server.entities.*;
-import com.tetradunity.server.models.*;
+import com.tetradunity.server.models.general.Role;
+import com.tetradunity.server.models.subjects.*;
+import com.tetradunity.server.models.tests.AnswersTest;
+import com.tetradunity.server.models.tests.ExaminationRequest;
+import com.tetradunity.server.models.users.Candidate;
 import com.tetradunity.server.projections.AnnounceSubjectProjection;
 import com.tetradunity.server.repositories.*;
 import com.tetradunity.server.services.*;
@@ -52,7 +56,7 @@ public class SubjectController {
 
         if (user.getRole() == Role.CHIEF_TEACHER) {
             if (subject.getTeacher_email() == null || subject.getTitle() == null ||
-                    subject.getTime_exam_end() == 0 || subject.getTime_start() == 0 ||
+                    subject.getTime_start() == 0 ||
                     subject.getShort_description() == null || subject.getDuration() == 0 ||
                     subject.getTimetable() == null || subject.getTags() == null) {
                 return ResponseService.failed("incorrect_data");
@@ -60,10 +64,10 @@ public class SubjectController {
 
             UserEntity teacher = userRepository.findByEmail(subject.getTeacher_email()).orElse(null);
 
+            long current_time = System.currentTimeMillis();
 
-            if (System.currentTimeMillis() + 25_920_000 > subject.getTime_exam_end() ||
-                    subject.getTime_exam_end() + 86_399_999 > subject.getTime_start() ||
-                    subject.getDuration() < 25_920_000) {
+            if (current_time + 259_200_000 > subject.getTime_start() ||
+                    subject.getDuration() < 259_200_000) {
                 return ResponseService.failed("error_time");
             }
 
@@ -78,6 +82,11 @@ public class SubjectController {
             } else {
                 try {
                     subject.setExam(JSONService.checkTest(subject.getExam()));
+                    if(subject.getTime_exam_end() == 0 ||
+                            current_time + 259_200_000 > subject.getTime_exam_end() ||
+                            subject.getTime_exam_end() + 86_399_999 > subject.getTime_start()){
+                        return ResponseService.failed("error_time");
+                    }
                 } catch (Exception e) {
                     return ResponseService.failed("incorrect_format_exam");
                 }
@@ -86,8 +95,9 @@ public class SubjectController {
             if (subject.getDescription() != null) {
                 String description;
                 subject.setDescription(description = subject.getDescription().trim());
-                if (description.length() < 100) {
-                    return ResponseService.failed();
+                int length = description.length();
+                if (length < 100 || length > 2000) {
+                    return ResponseService.failed("incorrect_size_description");
                 }
             } else {
                 return ResponseService.failed();
@@ -214,7 +224,7 @@ public class SubjectController {
         return ResponseEntity.ok().body(response);
     }
 
-    @PostMapping("create-link-exam")
+    @PostMapping("apply-subject")
     public ResponseEntity<Object> createLinkExam(HttpServletRequest req, @RequestBody(required = false) ExaminationRequest request) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
@@ -230,6 +240,7 @@ public class SubjectController {
         if (subject == null) {
             return ResponseService.failed();
         }
+
 
         int durationExam = JSONService.getTime(subject.getExam());
 
@@ -263,7 +274,20 @@ public class SubjectController {
 
         String uid = UUID.randomUUID().toString();
 
-        ResultExamEntity resultExamEntity = new ResultExamEntity(subject_id, email, first_name, last_name, "", -1, 0, uid, -1);
+        if(subject.getExam().isEmpty()){
+            resultExamRepository.save(new ResultExamEntity(subject_id, email, first_name, last_name,
+                    "", -1, 0, 0, uid, -1));
+
+            mailService.sendApplicationSubmitted(email, first_name, last_name);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("ok", true);
+            return ResponseEntity.ok().body(response);
+        }
+
+
+        ResultExamEntity resultExamEntity = new ResultExamEntity(subject_id, email, first_name, last_name,
+                "[]", -1, 0, 0, uid, -1);
 
         resultExamRepository.save(resultExamEntity);
 
@@ -289,21 +313,83 @@ public class SubjectController {
 
         SubjectEntity subject = subjectRepository.findById(resultExam.getParent_id()).orElse(null);
 
+        String exam = subject.getExam();
 
-        int duration = JSONService.getTime(subject.getExam());
+        if(exam.isEmpty()){
+            return ResponseService.notFound();
+        }
 
-        if (subject.getTime_exam_end() < System.currentTimeMillis() + duration + 20_000) {
+        int duration = JSONService.getTime(exam);
+
+        long exam_end = subject.getTime_exam_end();
+        long current_time = System.currentTimeMillis();
+
+        if (exam_end < current_time + 20_000) {
             return ResponseService.failed("late");
         }
 
-        resultExam.setEnd_time(System.currentTimeMillis() + duration);
+        long end_time = current_time + duration;
+
+        if(end_time > exam_end){
+            end_time = exam_end;
+        }
+
+        resultExam.setTime_end(end_time);
+        resultExam.setTime_start(current_time);
 
         resultExamRepository.save(resultExam);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("exam", JSONService.getQuestions(subject.getExam(), true));
+        response.put("exam", JSONService.getQuestions(exam, true));
         response.put("ok", true);
         return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("update-answer")
+    public ResponseEntity<Object> updateAnswer(@RequestBody AnswersTest request) {
+        if (request == null) {
+            return ResponseService.failed();
+        }
+
+        ResultExamEntity resultTest = resultExamRepository.findByUID(request.getUid()).orElse(null);
+
+        if (resultTest == null) {
+            return ResponseService.failed();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(resultTest.getParent_id()).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        String exam = subject.getExam();
+
+        if(exam.isEmpty()){
+            return ResponseService.notFound();
+        }
+
+        long current_time = System.currentTimeMillis();
+
+        if (resultTest.getTime_end() < current_time) {
+            return ResponseService.failed("late");
+        }
+
+        String answers = request.getAnswer();
+
+        double result;
+
+        try{
+            result = JSONService.checkAnswers(exam, answers);
+            resultTest.setAnswers(answers);
+            resultTest.setResult(result);
+            Map<String, Object> response = new HashMap<>();
+            response.put("ok", true);
+            return ResponseEntity.ok().body(response);
+        }
+        catch(RuntimeException ex){
+            return ResponseService.failed();
+        }
     }
 
     @PostMapping("send-answer-exam")
@@ -324,37 +410,36 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
+        String exam = subject.getExam();
+
+        if(exam.isEmpty()){
+            return ResponseService.notFound();
+        }
+
         if (subject.getTime_exam_end() < System.currentTimeMillis()) {
             return ResponseService.failed("late");
         }
 
-        String exam = subject.getExam();
-        int passing_grade = JSONService.getPassing_grade(exam);
         double result;
 
         try {
             result = JSONService.checkAnswers(subject.getExam(), request.getAnswer());
         } catch (RuntimeException ex) {
-            return ResponseService.failed();
+            result = 0;
         }
 
-        if (result < passing_grade) {
-            resultExamRepository.delete(resultTest);
-        } else {
-            int duration = JSONService.getTime(exam);
-            long current = System.currentTimeMillis();
+        long current = System.currentTimeMillis();
 
-            resultTest.setAnswers(request.getAnswer());
-            resultTest.setResult(result);
-            resultTest.setDuration((int) (current + duration - resultTest.getEnd_time()));
-            resultTest.setEnd_time(current);
+        resultTest.setAnswers(request.getAnswer());
+        resultTest.setResult(result);
+        resultTest.setDuration((int) (resultTest.getTime_end() - current));
+        resultTest.setTime_end(current);
 
-            resultExamRepository.save(resultTest);
-        }
+        resultExamRepository.save(resultTest);
 
         Map<String, Object> response = new HashMap<>();
         response.put("result", result);
-        response.put("passing_grade", passing_grade);
+        response.put("passing_grade", JSONService.getPassing_grade(exam));
         response.put("ok", true);
         return ResponseEntity.ok().body(response);
     }
@@ -382,7 +467,7 @@ public class SubjectController {
             return ResponseService.failed("no_permission");
         }
 
-        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subjectId);
+        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subjectId, subject.getExam().isEmpty());
 
         Map<String, Object> response = new HashMap<>();
         response.put("candidates", candidates);
@@ -397,6 +482,7 @@ public class SubjectController {
         if (user == null) {
             return ResponseService.unauthorized();
         }
+
         ResultExamEntity resultTest = resultExamRepository.findById(id).orElse(null);
 
         if (resultTest == null) {
@@ -407,6 +493,10 @@ public class SubjectController {
 
         if (subject == null) {
             return ResponseService.failed();
+        }
+
+        if(subject.getExam().isEmpty()){
+            return ResponseService.notFound();
         }
 
         if (subject.getTeacher_id() != user.getId() && user.getRole() != Role.CHIEF_TEACHER) {
@@ -474,7 +564,7 @@ public class SubjectController {
             return ResponseService.failed("no_permission");
         }
 
-        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subject.getId());
+        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subject.getId(), subject.getExam().isEmpty());
 
         String studentEmail;
         String first_name;
@@ -513,6 +603,8 @@ public class SubjectController {
         if (current > subject.getTime_start()) {
             subject.setTime_start(current);
         }
+
+        resultExamRepository.deleteBySubjectId(subject.getId());
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);

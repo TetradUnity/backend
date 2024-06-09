@@ -167,4 +167,29 @@ public class MailService {
                 .process(model, writer);
         return writer.toString();
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @SneakyThrows
+    public void sendApplicationSubmitted(String email, String first_name, String last_name) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
+                false,
+                "UTF-8");
+        helper.setSubject("application approved");
+        helper.setTo(email);
+        String emailContent = getRecoveryPassword(first_name, last_name);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getApplicationSubmitted(String first_name, String last_name) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("first_name", first_name);
+        model.put("last_name", last_name);
+
+        StringWriter writer = new StringWriter();
+        configuration.getTemplate("applicationSubmitted.ftlh")
+                .process(model, writer);
+        return writer.toString();
+    }
 }

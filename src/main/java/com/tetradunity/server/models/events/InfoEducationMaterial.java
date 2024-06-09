@@ -1,4 +1,4 @@
-package com.tetradunity.server.models;
+package com.tetradunity.server.models.events;
 
 import com.tetradunity.server.projections.InfoEducationMaterialProjection;
 import lombok.AllArgsConstructor;

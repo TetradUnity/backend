@@ -121,7 +121,7 @@ public class EducationController {
 
         if (user.getRole() != Role.CHIEF_TEACHER &&
                 user.getId() != subject.getTeacher_id() &&
-                studentSubjectRepository.findByStudentIdAndSubjectId(user.getId(), subject_id).orElse(null) == null) {
+                studentSubjectRepository.findByStudent_idAndSubject_id(user.getId(), subject_id).orElse(null) == null) {
             return ResponseService.failed("no_permission");
         }
 
@@ -166,7 +166,7 @@ public class EducationController {
 
         if (user.getRole() != Role.CHIEF_TEACHER &&
                 user_id != subject.getTeacher_id() &&
-                studentSubjectRepository.findByStudentIdAndSubjectId(user_id, subject_id).orElse(null) == null) {
+                studentSubjectRepository.findByStudent_idAndSubject_id(user_id, subject_id).orElse(null) == null) {
             return ResponseService.failed("no_permission");
         }
 
@@ -250,7 +250,7 @@ public class EducationController {
             return ResponseService.failed();
         }
 
-        if (studentSubjectRepository.findByStudentIdAndSubjectId(user_id, subject_id).orElse(null) == null) {
+        if (studentSubjectRepository.findByStudent_idAndSubject_id(user_id, subject_id).orElse(null) == null) {
             return ResponseService.failed("no_permission");
         }
         String homework = requestModel.getModel();

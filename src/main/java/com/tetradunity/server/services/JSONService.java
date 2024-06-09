@@ -301,7 +301,7 @@ public class JSONService {
             switch (key) {
                 case "time":
                     val = GeneralInfo.getInt(key);
-                    if (val <= 0) {
+                    if (val <= 0 || val >= 18_000_000) {
                         GeneralInfo.put(key, -1);
                     }
                     break;
@@ -324,6 +324,7 @@ public class JSONService {
                     GeneralInfo.remove(key);
             }
         }
+        proccessedQuestions.put(GeneralInfo);
         for (int q = 1; q < questions.length(); q++) {
             question = questions.getJSONObject(q);
             title = question.getString("title");
@@ -351,7 +352,6 @@ public class JSONService {
                             throw new RuntimeException();
                         }
                         existsCorrect |= temp;
-                        System.out.println("mihau");
                     }
                     break;
                 case "MULTY_ANSWER":

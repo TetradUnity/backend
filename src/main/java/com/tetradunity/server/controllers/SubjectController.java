@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/subject")
@@ -115,7 +116,7 @@ public class SubjectController {
 
             if (subject.getShort_description() != null) {
                 String short_description;
-                subject.setDescription(short_description = subject.getShort_description().trim());
+                subject.setShort_description(short_description = subject.getShort_description().trim());
                 int description_length = calculateTextLength(short_description);
                 if (description_length < 10) {
                     return ResponseService.failed("small_size_short_description");
@@ -137,7 +138,7 @@ public class SubjectController {
                 if (storageService.downloadFile("banners/" + banner) != null) {
                     subject.setBanner(banner);
                 } else {
-                    subject.setBanner("banners/base" + rand.nextInt(1, 5));
+                    subject.setBanner("banners/base" + rand.nextInt(1, 5) + ".jpg");
                 }
             }
             SubjectEntity subjectEntity = subjectRepository.save(new SubjectEntity(subject, teacher.getId()));
@@ -150,6 +151,8 @@ public class SubjectController {
                 }
                 tagSubjectRepository.save(new TagSubjectEntity(id, tag));
             }
+
+            System.out.println(subject.getDescription());
 
             Map<String, Object> response = new HashMap<>();
             response.put("ok", true);
@@ -174,7 +177,7 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        if (studentSubjectRepository.findByStudentIdAndSubjectId(user.getId(), subjectId).isPresent() ||
+        if (studentSubjectRepository.findByStudent_idAndSubject_id(user.getId(), subjectId).isPresent() ||
                 subjectEntity.getTeacher_id() == user.getId() || user.getRole() == Role.CHIEF_TEACHER
         ) {
             UserEntity teacher = userRepository.findById(subjectEntity.getTeacher_id()).orElse(null);
@@ -184,10 +187,10 @@ public class SubjectController {
             }
 
             List<UserEntity> students = new ArrayList<>();
-            List<StudentSubjectEntity> studentsSubject = studentSubjectRepository.findBySubjectId(subjectId);
+            List<StudentSubjectEntity> studentsSubject = studentSubjectRepository.findBySubject_id(subjectId);
             UserEntity student;
             for (StudentSubjectEntity studentSubject : studentsSubject) {
-                if ((student = userRepository.findById(studentSubject.getStudentId()).orElse(null))
+                if ((student = userRepository.findById(studentSubject.getStudent_id()).orElse(null))
                         != null) {
                     students.add(student);
                 }
@@ -207,14 +210,17 @@ public class SubjectController {
             @RequestBody(required = false) SubjectFilter filter) {
         List<AnnounceSubjectProjection> subjectsAnnounce;
 
-        int pos = (page - 1) * 10;
+        int pos = (page - 1) * 12;
 
         subjectsAnnounce = subjectRepository.findAccessAnnounceSubject(pos, filter);
 
         List<AnnounceSubject> subjects = new ArrayList<>();
         List<String> tags;
         for (AnnounceSubjectProjection temp : subjectsAnnounce) {
-            tags = tagSubjectRepository.findBySubject(temp.getId());
+            tags = tagSubjectRepository.findBySubject(temp.getId())
+                    .stream()
+                    .map(TagSubjectEntity::getTag)
+                    .toList();
             UserEntity teacher = userRepository.findById(temp.getTeacher_id()).orElse(null);
             subjects.add(new AnnounceSubject(temp, teacher.getFirst_name(),
                     teacher.getLast_name(), tags.toArray(new String[tags.size()])));

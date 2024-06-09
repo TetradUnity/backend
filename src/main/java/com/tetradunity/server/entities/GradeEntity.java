@@ -21,6 +21,7 @@ public class GradeEntity {
     private long student_id;
     private long subject_id;
     private long parent_id;
+    @Column(columnDefinition = "TEXT")
     private String content = "";
     private long time_edited_end;
     private int attempt = 1;

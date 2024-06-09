@@ -28,7 +28,7 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
             "AND ((:has_exam IS NULL) OR (:has_exam = true AND s.exam <> '') OR (:has_exam = false AND s.exam = '')) " +
             "AND (:first_name_teacher IS NULL OR u.first_name LIKE :first_name_teacher%) " +
             "AND (:last_name_teacher IS NULL OR u.last_name LIKE :last_name_teacher%) " +
-            "LIMIT 10 OFFSET :pos", nativeQuery = true)
+            "LIMIT 12 OFFSET :pos", nativeQuery = true)
     List<AnnounceSubjectProjection> findAccessAnnounceSubject(int pos, String title, List<String> tags, int count_tags, Boolean has_exam,
                                                               String first_name_teacher, String last_name_teacher);
 
@@ -62,7 +62,7 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
     default int countAnnounceSubject(SubjectFilter filter) {
         double res;
         if (filter == null) {
-            res = countAnnounceSubject(null, new ArrayList<String>(), 0, null, null, null) / 10d;
+            res = countAnnounceSubject(null, new ArrayList<String>(), 0, null, null, null) / 12d;
         } else {
             List<String> tags = filter.getTags();
             res = countAnnounceSubject(filter.getTitle(), tags == null ? new ArrayList<String>() : tags, tags == null ? 0 : tags.size(),

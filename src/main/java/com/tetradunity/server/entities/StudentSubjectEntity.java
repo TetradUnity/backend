@@ -14,14 +14,14 @@ public class StudentSubjectEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private long studentId;
-    private long subjectId;
+    private long student_id;
+    private long subject_id;
 
     public StudentSubjectEntity() {
     }
 
-    public StudentSubjectEntity(long studentId, long subjectId) {
-        this.studentId = studentId;
-        this.subjectId = subjectId;
+    public StudentSubjectEntity(long student_id, long subject_id) {
+        this.student_id = student_id;
+        this.subject_id = subject_id;
     }
 }

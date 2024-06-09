@@ -1,6 +1,5 @@
 package com.tetradunity.server.entities;
 
-import com.tetradunity.server.repositories.TagSubjectRepository;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,6 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "tags_subject")
 public class TagSubjectEntity {
     @Id

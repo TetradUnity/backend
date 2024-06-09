@@ -19,6 +19,7 @@ public class EducationMaterialEntity {
     private String title;
     private long subject_id;
     private boolean is_test;
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     private long deadline;

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TagRepository extends CrudRepository<TagEntity, Long> {
+    @Query(value = "select * from tags where tag = :tag", nativeQuery = true)
     Optional<TagEntity> findByTag(String tag);
     default boolean existsTag(String tag){
         return findByTag(tag).isPresent();

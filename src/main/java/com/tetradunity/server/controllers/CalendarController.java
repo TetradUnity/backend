@@ -44,7 +44,7 @@ public class CalendarController {
         long[] subject_id = filter.getSubjects_id();
 
         for (long temp : subject_id) {
-            if (studentSubjectRepository.findByStudentIdAndSubjectId(student_id, temp).orElse(null) == null) {
+            if (studentSubjectRepository.findByStudent_idAndSubject_id(student_id, temp).orElse(null) == null) {
                 return ResponseService.failed();
             }
         }

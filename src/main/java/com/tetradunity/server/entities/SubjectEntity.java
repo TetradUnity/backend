@@ -20,6 +20,7 @@ public class SubjectEntity {
     private long time_end;
 
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     private String short_description;
@@ -32,6 +33,7 @@ public class SubjectEntity {
     private boolean is_end = false;
     private boolean is_start = false;
 
+    @Column(columnDefinition = "TEXT")
     private String exam;
 
     public SubjectEntity() {

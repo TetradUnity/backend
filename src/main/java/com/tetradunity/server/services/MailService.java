@@ -192,4 +192,29 @@ public class MailService {
                 .process(model, writer);
         return writer.toString();
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @SneakyThrows
+    public void sendStartSubjectRemind(String email, String first_name, String subject_title) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
+                false,
+                "UTF-8");
+        helper.setSubject("start subject");
+        helper.setTo(email);
+        String emailContent = getRecoveryPassword(first_name, subject_title);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getStartSubjectRemind(String first_name, String last_name) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("first_name", first_name);
+        model.put("subject_title", last_name);
+
+        StringWriter writer = new StringWriter();
+        configuration.getTemplate("startSubjectRemind.ftlh")
+                .process(model, writer);
+        return writer.toString();
+    }
 }

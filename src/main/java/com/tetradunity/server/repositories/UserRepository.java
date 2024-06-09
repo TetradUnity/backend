@@ -1,6 +1,7 @@
 package com.tetradunity.server.repositories;
 
 import com.tetradunity.server.entities.UserEntity;
+import com.tetradunity.server.projections.StartSubjectRemind;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +20,13 @@ public interface UserRepository extends CrudRepository<UserEntity, Long> {
 		Long count = countChiefTeachers();
 		return count > 0;
 	}
+
+	@Query(value = """
+				SELECT u.email, u.first_name, s.title FROM users u
+				JOIN student_subjects st ON st.student_id = u.id
+				JOIN subjects s ON s.id = st.subject_id
+				WHERE (s.time_start BETWEEN UNIX_TIMESTAMP() * 1000 - 900000 AND UNIX_TIMESTAMP() * 1000)
+				AND s.is_start
+			""", nativeQuery = true)
+	List<StartSubjectRemind> findUserRemind();
 }

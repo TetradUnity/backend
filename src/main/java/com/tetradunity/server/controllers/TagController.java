@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("tag")
@@ -20,38 +21,19 @@ public class TagController {
     @Autowired
     private TagRepository tagRepository;
 
-    @PostMapping("create")
-    public ResponseEntity<Object> createTag(HttpServletRequest req, @RequestParam(name = "tag", required = true) String tag) {
-        UserEntity user = AuthUtil.authorizedUser(req);
-
-        if (user == null) {
-            return ResponseService.unauthorized();
+    @GetMapping("find-tags-prefix")
+    public ResponseEntity<Object> findTagsPrefix(@RequestParam String prefix){
+        if(prefix.length() < 2){
+            ResponseService.notFound();
         }
 
-        if (user.getRole() != Role.CHIEF_TEACHER) {
-            return ResponseService.failed();
-        }
-
-        if (tag == null || tagRepository.existsTag(tag)) {
-            return ResponseService.failed("tag_exists");
-        }
-
-        tagRepository.save(new TagEntity(tag));
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("ok", true);
-        return ResponseEntity.ok().body(response);
-    }
-
-    @GetMapping("get-tags")
-    public ResponseEntity<Object> getTags() {
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
         response.put("tags", tagRepository
-                .findAll()
+                .findOptionByPrefixTag(prefix)
                 .stream()
                 .map(TagEntity::getTag)
-                .toArray(String[]::new));
+                .collect(Collectors.toList()));
         return ResponseEntity.ok().body(response);
     }
 }

@@ -50,6 +50,10 @@ public class ConferenceController {
             return ResponseService.failed("no_permission");
         }
 
+        if (!subject.educationProcess()) {
+            return ResponseService.failed();
+        }
+
         long date = info.getDate();
 
         if(System.currentTimeMillis() >= date){
@@ -102,6 +106,10 @@ public class ConferenceController {
 
         if(user.getId() != subject.getTeacher_id()){
             return ResponseService.failed("no_permission");
+        }
+
+        if (!subject.educationProcess()) {
+            return ResponseService.failed();
         }
 
         long current_time = System.currentTimeMillis();

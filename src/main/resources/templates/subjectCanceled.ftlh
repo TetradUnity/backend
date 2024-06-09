@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Нажаль ви не здали</title>
+    <title>Вітаємо ${first_name}</title>
     <style>
         #body {
         display: flex;
@@ -34,10 +34,9 @@
     <div id="body">
         <div id="div">
             <p>Вітаємо, ${first_name}!</p>
-            <p>Нажаль мусимо повідомити що ви не пройшли відбір на ${subject_title}}</p>
-            <p>Можете спробувати інші наші курсі</p>
+            <p>Нажаль, мусимо вас повідомити що з певних причин предмет ${subject_title} було відмінено</p>
+            <p>Проте ви можете спробувати й інші наші предмети</p>
             <p>З найкращими побажаннями</br>     <i>TetradUnity</i></p>
     </div>
-</div>
 </body>
-        </html>
+</html>

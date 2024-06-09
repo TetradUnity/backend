@@ -497,6 +497,10 @@ public class SubjectController {
             return ResponseService.failed("no_permission");
         }
 
+        if(!subject.stageAnnounce()){
+            return ResponseService.failed();
+        }
+
         List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subjectId, subject.getExam().isEmpty());
 
         Map<String, Object> response = new HashMap<>();
@@ -533,6 +537,10 @@ public class SubjectController {
             return ResponseService.failed("no_permission");
         }
 
+        if(!subject.stageAnnounce()){
+            return ResponseService.failed();
+        }
+
         String answers = resultTest.getAnswers();
 
         Map<String, Object> response = new HashMap<>();
@@ -563,8 +571,12 @@ public class SubjectController {
         if (subject.getTeacher_id() != user.getId()) {
             return ResponseService.failed("no_permission");
         }
-        mailService.sendExamFail(resultTest.getFirst_name(), user.getLast_name(), subject.getTitle(), resultTest.getEmail());
 
+        if(!subject.stageAnnounce()){
+            return ResponseService.failed();
+        }
+
+        mailService.sendExamFail(resultTest.getFirst_name(), user.getLast_name(), subject.getTitle(), resultTest.getEmail());
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
@@ -572,19 +584,13 @@ public class SubjectController {
     }
 
     @PostMapping("approve-students")
-    public ResponseEntity<Object> approveStudents(HttpServletRequest req, @RequestParam(required = true) long id) {
+    public ResponseEntity<Object> approveStudents(HttpServletRequest req, @RequestParam(required = true) long subject_id) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {
             return ResponseService.unauthorized();
         }
-        ResultExamEntity resultTest = resultExamRepository.findById(id).orElse(null);
-
-        if (resultTest == null) {
-            return ResponseService.failed();
-        }
-
-        SubjectEntity subject = subjectRepository.findById(resultTest.getParent_id()).orElse(null);
+        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
         if (subject == null || subject.is_start()) {
             return ResponseService.failed();
@@ -594,7 +600,11 @@ public class SubjectController {
             return ResponseService.failed("no_permission");
         }
 
-        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subject.getId(), subject.getExam().isEmpty());
+        if(!subject.stageAnnounce()){
+            return ResponseService.failed();
+        }
+
+        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subject_id, subject.getExam().isEmpty());
 
         String studentEmail;
         String first_name;
@@ -623,7 +633,7 @@ public class SubjectController {
             }
 
             mailService.sendExamComplete(student.getFirst_name(), student.getLast_name(), subject_title, studentEmail);
-            studentSubjectRepository.save(new StudentSubjectEntity(student.getId(), subject.getId()));
+            studentSubjectRepository.save(new StudentSubjectEntity(student.getId(), subject_id));
         }
 
         subject.set_start(true);
@@ -634,7 +644,107 @@ public class SubjectController {
             subject.setTime_start(current);
         }
 
-        resultExamRepository.deleteBySubjectId(subject.getId());
+        resultExamRepository.deleteBySubjectId(subject_id);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @DeleteMapping("delete-announce-subject")
+    public ResponseEntity<Object> deleteAnnounceSubject(HttpServletRequest req, @RequestParam(required = true) long subject_id) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
+
+        if (subject == null || subject.is_start()) {
+            return ResponseService.failed();
+        }
+
+        if (subject.getTeacher_id() != user.getId()) {
+            return ResponseService.failed("no_permission");
+        }
+
+        if(!subject.stageAnnounce()){
+            return ResponseService.failed();
+        }
+
+        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subject_id, true);
+
+        String studentEmail;
+        String subject_title = subject.getTitle();
+        String first_name;
+
+        for (Candidate candidate : candidates) {
+            studentEmail = candidate.getEmail();
+            first_name = candidate.getFirst_name();
+            mailService.sendSubjectCanceled(studentEmail, first_name , subject_title);
+        }
+
+        resultExamRepository.deleteBySubjectId(subject_id);
+        subjectRepository.delete(subject);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("finish-subject")
+    public ResponseEntity<Object> finishSubject(HttpServletRequest req, @RequestParam(required = true) long subject_id) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        if (subject.getTeacher_id() != user.getId()) {
+            return ResponseService.failed("no_permission");
+        }
+
+        if(!subject.educationProcess()){
+            return ResponseService.failed();
+        }
+
+        subject.set_end(false);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("get-archived-subjects")
+    public ResponseEntity<Object> getArchiveSubjects(HttpServletRequest req, @RequestParam(required = true) long subject_id) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        if (subject.getTeacher_id() != user.getId()) {
+            return ResponseService.failed("no_permission");
+        }
+
+        if(!subject.educationProcess()){
+            return ResponseService.failed();
+        }
+
+        subject.set_end(false);
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);

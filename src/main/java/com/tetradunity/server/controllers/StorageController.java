@@ -53,7 +53,7 @@ public class StorageController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("ok", true);
-            response.put("path", path);
+            response.put("path", storageService.trimRootFolders(path));
             return ResponseEntity.ok(response);
         }
         return ResponseService.failed();
@@ -67,4 +67,6 @@ public class StorageController {
     private boolean between(double num, double from, double till){
         return num > from && num < till;
     }
+
+
 }

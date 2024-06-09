@@ -130,4 +130,12 @@ public class StorageService {
         }
         return 0;
     }
+
+    public String trimRootFolders(String filePath) {
+        int index = filePath.indexOf("/");
+        if (index != -1) {
+            return filePath.substring(index + 1);
+        }
+        return filePath;
+    }
 }

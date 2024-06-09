@@ -17,5 +17,4 @@ public class SubjectFilter {
     private String first_name_teacher;
     private String last_name_teacher;
     private String title;
-    private boolean ascent = true;
 }

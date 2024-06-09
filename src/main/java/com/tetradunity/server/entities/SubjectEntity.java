@@ -69,4 +69,6 @@ public class SubjectEntity {
     public boolean educationProcess() {
         return is_start && !is_end && System.currentTimeMillis() > time_start;
     }
+
+    public boolean stageAnnounce(){return !is_start || System.currentTimeMillis() < time_start;}
 }

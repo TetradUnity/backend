@@ -201,7 +201,7 @@ public class MailService {
                 "UTF-8");
         helper.setSubject("start subject");
         helper.setTo(email);
-        String emailContent = getRecoveryPassword(first_name, subject_title);
+        String emailContent = getStartSubjectRemind(first_name, subject_title);
         helper.setText(emailContent, true);
         mailSender.send(mimeMessage);
     }
@@ -214,6 +214,30 @@ public class MailService {
 
         StringWriter writer = new StringWriter();
         configuration.getTemplate("startSubjectRemind.ftlh")
+                .process(model, writer);
+        return writer.toString();
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @SneakyThrows
+    public void sendSubjectCanceled(String email, String first_name, String subject_title) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
+                false,
+                "UTF-8");
+        helper.setSubject("start subject");
+        helper.setTo(email);
+        String emailContent = getSubjectCanceled(first_name, subject_title);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getSubjectCanceled(String first_name, String subject_title) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("first_name", first_name);
+
+        StringWriter writer = new StringWriter();
+        configuration.getTemplate("subjectCanceled.ftlh")
                 .process(model, writer);
         return writer.toString();
     }

@@ -170,6 +170,10 @@ public class EducationController {
             return ResponseService.failed("no_permission");
         }
 
+        if (!subject.educationProcess()) {
+            return ResponseService.failed();
+        }
+
         long deadline = educationMaterial.getDeadline();
         long current_time = System.currentTimeMillis();
         String content = educationMaterial.getContent();
@@ -247,6 +251,10 @@ public class EducationController {
         SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
         if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        if (!subject.educationProcess()) {
             return ResponseService.failed();
         }
 

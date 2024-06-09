@@ -55,6 +55,10 @@ public class GradeController {
             return ResponseService.failed("no_permission");
         }
 
+        if (!subject.educationProcess()) {
+            return ResponseService.failed();
+        }
+
         EducationMaterialEntity educationMaterial = educationMaterialRepository.findById(grade.getParent_id()).orElse(null);
 
         long current_time = System.currentTimeMillis();

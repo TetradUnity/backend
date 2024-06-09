@@ -41,6 +41,11 @@ public class SubjectController {
 
     private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
+    private static int calculateTextLength(String htmlString) {
+        String textWithoutTags = htmlString.replaceAll("<.*?>", "");
+        return textWithoutTags.length();
+    }
+
     @PostMapping("create")
     public ResponseEntity<Object> createSubject(HttpServletRequest req,
                                                 @RequestBody(required = false) SubjectCreate subject) {
@@ -56,8 +61,8 @@ public class SubjectController {
 
         if (user.getRole() == Role.CHIEF_TEACHER) {
             if (subject.getTeacher_email() == null || subject.getTitle() == null ||
-                    subject.getTime_start() == 0 ||
-                    subject.getShort_description() == null || subject.getDuration() == 0 ||
+                    subject.getTime_exam_end() == 0 || subject.getTime_start() == 0 ||
+                    subject.getDuration() == 0 ||
                     subject.getTimetable() == null || subject.getTags() == null) {
                 return ResponseService.failed("incorrect_data");
             }
@@ -66,8 +71,9 @@ public class SubjectController {
 
             long current_time = System.currentTimeMillis();
 
-            if (current_time + 259_200_000 > subject.getTime_start() ||
-                    subject.getDuration() < 259_200_000) {
+            if(current_time + 259_200_000 > subject.getTime_exam_end() ||
+                    subject.getDuration() < 259_200_000 ||
+                    subject.getTime_exam_end() + 86_399_999 > subject.getTime_start()){
                 return ResponseService.failed("error_time");
             }
 
@@ -77,27 +83,45 @@ public class SubjectController {
 
             String[] tags = subject.getTags();
 
+            {
+                int title_length = subject.getTitle().length();
+                if (title_length < 2 || title_length > 70){
+                    return ResponseService.failed();
+                }
+            }
+
             if (subject.getExam() == null) {
                 subject.setExam("");
             } else {
                 try {
                     subject.setExam(JSONService.checkTest(subject.getExam()));
-                    if(subject.getTime_exam_end() == 0 ||
-                            current_time + 259_200_000 > subject.getTime_exam_end() ||
-                            subject.getTime_exam_end() + 86_399_999 > subject.getTime_start()){
-                        return ResponseService.failed("error_time");
-                    }
                 } catch (Exception e) {
                     return ResponseService.failed("incorrect_format_exam");
                 }
             }
-
             if (subject.getDescription() != null) {
                 String description;
                 subject.setDescription(description = subject.getDescription().trim());
-                int length = description.length();
-                if (length < 100 || length > 2000) {
-                    return ResponseService.failed("incorrect_size_description");
+                int description_length = calculateTextLength(description);
+                if (description_length < 100) {
+                    return ResponseService.failed("small_size_description");
+                }
+                if (description_length > 2000) {
+                    return ResponseService.failed("big_size_description");
+                }
+            } else {
+                return ResponseService.failed();
+            }
+
+            if (subject.getShort_description() != null) {
+                String short_description;
+                subject.setDescription(short_description = subject.getShort_description().trim());
+                int description_length = calculateTextLength(short_description);
+                if (description_length < 10) {
+                    return ResponseService.failed("small_size_short_description");
+                }
+                if (description_length > 200) {
+                    return ResponseService.failed("big_size_short_description");
                 }
             } else {
                 return ResponseService.failed();

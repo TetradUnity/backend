@@ -17,7 +17,6 @@ public class SubjectEntity {
 
     private long time_exam_end;
     private long time_start;
-    private long time_end;
 
     private String title;
     @Column(columnDefinition = "TEXT")
@@ -30,14 +29,12 @@ public class SubjectEntity {
     private String banner;
 
     private long teacher_id;
-    private boolean is_end = false;
     private boolean is_start = false;
 
     @Column(columnDefinition = "TEXT")
     private String exam;
 
-    public SubjectEntity() {
-    }
+    public SubjectEntity() {}
 
     public SubjectEntity(String title, long teacher_id, String description, long time_exam_end, long time_start,
                          String exam, String short_description, long duration, String timetable, String banner) {
@@ -67,7 +64,7 @@ public class SubjectEntity {
     }
 
     public boolean educationProcess() {
-        return is_start && !is_end && System.currentTimeMillis() > time_start;
+        return is_start && System.currentTimeMillis() > time_start;
     }
 
     public boolean stageAnnounce(){return !is_start || System.currentTimeMillis() < time_start;}

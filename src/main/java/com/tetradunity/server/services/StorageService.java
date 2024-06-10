@@ -46,6 +46,17 @@ public class StorageService {
         return fileName;
     }
 
+    public String uploadCertificate(File file, UUID uid) {
+        String fileName = "certificates/" + uid.toString() + ".pdf";
+
+        try {
+            s3Client.putObject(new PutObjectRequest(bucketName, fileName, file));
+        } catch (Exception e) {
+            return null;
+        }
+        return fileName;
+    }
+
     public MultipartFile convertStringToMultipartFile(String content, String fileName) {
         byte[] contentBytes = content.getBytes();
         return new CustomMultipartFile(fileName, fileName, "text/plain", contentBytes);
@@ -71,9 +82,14 @@ public class StorageService {
     }
 
     public byte[] downloadFile(String path) {
-        S3ObjectInputStream inputStream = s3Client
+        S3ObjectInputStream inputStream;
+        try{
+            inputStream = s3Client
                 .getObject(bucketName, path)
                 .getObjectContent();
+        }catch(AmazonS3Exception e){
+            return null;
+        }
         try {
             return IOUtils.toByteArray(inputStream);
         } catch (IOException e) {
@@ -95,7 +111,6 @@ public class StorageService {
     public void deleteFile(String fileName) {
         s3Client.deleteObject(bucketName, fileName);
     }
-
 
     public File convertMultiPartFileToFile(MultipartFile file) {
         File convertedFile = new File(file.getOriginalFilename());

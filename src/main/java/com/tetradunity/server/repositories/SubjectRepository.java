@@ -3,6 +3,9 @@ package com.tetradunity.server.repositories;
 import com.tetradunity.server.entities.SubjectEntity;
 import com.tetradunity.server.models.subjects.SubjectFilter;
 import com.tetradunity.server.projections.AnnounceSubjectProjection;
+import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
@@ -13,40 +16,42 @@ import java.util.Optional;
 public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
     Optional<SubjectEntity> findById(long id);
 
-    @Query(value = "SELECT s.id, s.title, s.teacher_id, s.short_description, s.time_exam_end, s.time_start, s.banner " +
-            "FROM subjects s " +
-            "JOIN ( " +
-            "    SELECT subject_id " +
-            "    FROM tags_subject " +
-            "    WHERE :count_tags = 0 OR tag IN :tags " +
-            "    GROUP BY subject_id " +
-            "    HAVING :count_tags = 0 OR COUNT(DISTINCT tag) >= :count_tags" +
-            ") t ON s.id = t.subject_id " +
-            "JOIN users u ON u.id = s.teacher_id " +
-            "WHERE (s.time_exam_end > UNIX_TIMESTAMP() * 1000) " +
-            "AND (:title IS NULL OR s.title LIKE %:title%) " +
-            "AND ((:has_exam IS NULL) OR (:has_exam = true AND s.exam <> '') OR (:has_exam = false AND s.exam = '')) " +
-            "AND (:first_name_teacher IS NULL OR u.first_name LIKE :first_name_teacher%) " +
-            "AND (:last_name_teacher IS NULL OR u.last_name LIKE :last_name_teacher%) " +
-            "LIMIT 12 OFFSET :pos", nativeQuery = true)
+    @Query(value = """
+            SELECT s.id, s.title, s.teacher_id, s.short_description, s.time_exam_end, s.time_start, s.banner
+            FROM subjects s
+            JOIN (
+                SELECT subject_id
+                FROM tags_subject
+                WHERE :count_tags = 0 OR tag IN :tags
+                GROUP BY subject_id
+                HAVING :count_tags = 0 OR COUNT(DISTINCT tag) >= :count_tags
+            ) t ON s.id = t.subject_id
+            JOIN users u ON u.id = s.teacher_id
+            WHERE (s.time_exam_end < UNIX_TIMESTAMP() * 1000)
+            AND (:title IS NULL OR s.title LIKE %:title%)
+            AND ((:has_exam IS NULL) OR (:has_exam = true AND s.exam <> '') OR (:has_exam = false AND s.exam = ''))
+            AND (:first_name_teacher IS NULL OR u.first_name LIKE :first_name_teacher%)
+            AND (:last_name_teacher IS NULL OR u.last_name LIKE :last_name_teacher%)
+            LIMIT 12 OFFSET :pos""", nativeQuery = true)
     List<AnnounceSubjectProjection> findAccessAnnounceSubject(int pos, String title, List<String> tags, int count_tags, Boolean has_exam,
                                                               String first_name_teacher, String last_name_teacher);
 
-    @Query(value = "SELECT COUNT(*) " +
-            "FROM subjects s " +
-            "LEFT JOIN ( " +
-            "    SELECT subject_id " +
-            "    FROM tags_subject " +
-            "    WHERE :count_tags = 0 OR tag IN :tags " +
-            "    GROUP BY subject_id " +
-            "    HAVING :count_tags = 0 OR COUNT(DISTINCT tag) >= :count_tags" +
-            ") t ON s.id = t.subject_id " +
-            "JOIN users u ON u.id = s.teacher_id " +
-            "WHERE (s.time_exam_end > UNIX_TIMESTAMP() * 1000) " +
-            "AND (:title IS NULL OR s.title LIKE %:title%) " +
-            "AND ((:has_exam IS NULL) OR (:has_exam = true AND s.exam <> '') OR (:has_exam = false AND s.exam = '')) " +
-            "AND (:first_name_teacher IS NULL OR u.first_name LIKE :first_name_teacher%) " +
-            "AND (:last_name_teacher IS NULL OR u.last_name LIKE :last_name_teacher%) ", nativeQuery = true)
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM subjects s
+            LEFT JOIN (
+                SELECT subject_id
+                FROM tags_subject
+                WHERE :count_tags = 0 OR tag IN :tags
+                GROUP BY subject_id
+                HAVING :count_tags = 0 OR COUNT(DISTINCT tag) >= :count_tags
+            ) t ON s.id = t.subject_id
+            JOIN users u ON u.id = s.teacher_id
+            WHERE (s.time_exam_end > UNIX_TIMESTAMP() * 1000)
+            AND (:title IS NULL OR s.title LIKE %:title%)
+            AND ((:has_exam IS NULL) OR (:has_exam = true AND s.exam <> '') OR (:has_exam = false AND s.exam = ''))
+            AND (:first_name_teacher IS NULL OR u.first_name LIKE :first_name_teacher%)
+            AND (:last_name_teacher IS NULL OR u.last_name LIKE :last_name_teacher%)""", nativeQuery = true)
     int countAnnounceSubject(String title, List<String> tags, int count_tags, Boolean has_exam, String first_name_teacher, String last_name_teacher);
 
     default List<AnnounceSubjectProjection> findAccessAnnounceSubject(int pos, SubjectFilter filter) {
@@ -70,4 +75,5 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
         }
         return res > (int) res ? (int) res + 1 : (int) res;
     }
+
 }

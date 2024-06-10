@@ -62,26 +62,33 @@ public class UserController {
                                           @RequestParam(name = "id", required = false, defaultValue = "0") long id) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
+        Role myRole;
+
+        boolean isGuest;
+
         if (user == null) {
-            return ResponseService.unauthorized();
+            myRole = Role.STUDENT;
+            isGuest = true;
+        }
+        else{
+            myRole = user.getRole();
+            isGuest = false;
         }
 
-
-        if (id != 0 && id != user.getId()) {
-            Role myRole = user.getRole();
+        if (id != 0 && (isGuest || id != user.getId())) {
             user = userRepository.findById(id).orElse(null);
-            switch (myRole) {
-                case STUDENT -> {
-                    if (user.getRole() == Role.STUDENT) {
-                        user.setEmail(null);
-                    }
-                }
-                case TEACHER, CHIEF_TEACHER -> {
-                    if (user == null) {
-                        return ResponseService.failed("user_not_found", HttpStatus.NOT_FOUND);
-                    }
+            if(user == null){
+                return ResponseService.notFound();
+            }
+            if(myRole == Role.STUDENT){
+                if (user.getRole() == Role.STUDENT) {
+                    user = null;
                 }
             }
+        }
+
+        if(user == null){
+            return ResponseService.notFound();
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -146,15 +153,16 @@ public class UserController {
         }
 
         if (first_name != null) {
-            user.setEmail(email);
+            user.setFirst_name(first_name);
         }
 
         if (last_name != null) {
-            user.setEmail(email);
+            user.setLast_name(last_name);
         }
 
         if (avatar != null || avatar.trim().isEmpty()) {
             if (storageService.downloadFile("avatars/" + avatar) != null) {
+                storageService.deleteFile("avatars/" + user.getAvatar());
                 user.setAvatar(avatar);
             }
         }

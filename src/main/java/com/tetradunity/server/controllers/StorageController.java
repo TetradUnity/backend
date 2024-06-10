@@ -42,7 +42,7 @@ public class StorageController {
             case "education_materials" -> storageService.getFileExtension(file.getOriginalFilename()).equals(".html") &&
                                                                                                         role == Role.TEACHER;
             case "education_material_resources" -> role == Role.TEACHER;
-            case "homework", "homework_resources" -> role == Role.STUDENT;
+            case "homework_resources" -> role == Role.STUDENT;
             default -> false;
         }) {
             String path = storageService.uploadFile(file, folder);

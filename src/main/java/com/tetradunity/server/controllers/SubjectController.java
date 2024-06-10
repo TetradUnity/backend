@@ -7,16 +7,22 @@ import com.tetradunity.server.models.tests.AnswersTest;
 import com.tetradunity.server.models.tests.ExaminationRequest;
 import com.tetradunity.server.models.users.Candidate;
 import com.tetradunity.server.projections.AnnounceSubjectProjection;
+import com.tetradunity.server.projections.CandidateProjection;
 import com.tetradunity.server.repositories.*;
 import com.tetradunity.server.services.*;
 import com.tetradunity.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,6 +45,12 @@ public class SubjectController {
     private MailService mailService;
     @Autowired
     private StorageService storageService;
+    @Autowired
+    private CertificateService certificateService;
+    @Autowired
+    private EducationMaterialRepository educationMaterialRepository;
+    @Autowired
+    private GradeRepository gradeRepository;
 
     private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -238,7 +250,9 @@ public class SubjectController {
         if (subject == null) {
             return ResponseService.notFound();
         }
+
         int durationExam = JSONService.getTime(subject.getExam());
+
         if (subject.getTime_exam_end() < System.currentTimeMillis() + 10_800_000 + durationExam) {
             return ResponseService.failed("late");
         }
@@ -281,7 +295,7 @@ public class SubjectController {
         String email = request.getEmail();
 
         if (resultExamRepository.existsByEmailAndSubjectId(email, subject_id)) {
-            return ResponseService.failed();
+            return ResponseService.failed("you_already_tried");
         }
 
         String first_name;
@@ -341,6 +355,12 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
+        long current_time = System.currentTimeMillis();
+
+        if(resultExam.getTime_end() != 0 && resultExam.getTime_end() < current_time){
+            return ResponseService.failed("late");
+        }
+
         SubjectEntity subject = subjectRepository.findById(resultExam.getParent_id()).orElse(null);
 
         String exam = subject.getExam();
@@ -349,10 +369,17 @@ public class SubjectController {
             return ResponseService.notFound();
         }
 
+        if(resultExam.getTime_end() != 0){
+            Map<String, Object> response = new HashMap<>();
+            response.put("exam", JSONService.getQuestions(exam, false));
+            response.put("time_end", resultExam.getTime_end());
+            response.put("ok", true);
+            return ResponseEntity.ok().body(response);
+        }
+
         int duration = JSONService.getTime(exam);
 
         long exam_end = subject.getTime_exam_end();
-        long current_time = System.currentTimeMillis();
 
         if (exam_end < current_time + 20_000) {
             return ResponseService.failed("late");
@@ -370,7 +397,8 @@ public class SubjectController {
         resultExamRepository.save(resultExam);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("exam", JSONService.getQuestions(exam, true));
+        response.put("exam", JSONService.getQuestions(exam, false));
+        response.put("time_end", end_time);
         response.put("ok", true);
         return ResponseEntity.ok().body(response);
     }
@@ -399,6 +427,7 @@ public class SubjectController {
             return ResponseService.notFound();
         }
 
+
         long current_time = System.currentTimeMillis();
 
         if (resultTest.getTime_end() < current_time) {
@@ -418,7 +447,7 @@ public class SubjectController {
             return ResponseEntity.ok().body(response);
         }
         catch(RuntimeException ex){
-            return ResponseService.failed();
+            return ResponseService.failed("answers_incorrect");
         }
     }
 
@@ -493,7 +522,7 @@ public class SubjectController {
             return ResponseService.failed("late");
         }
 
-        if (user.getRole() != Role.CHIEF_TEACHER && subject.getTeacher_id() != user.getId()) {
+        if (subject.getTeacher_id() != user.getId()) {
             return ResponseService.failed("no_permission");
         }
 
@@ -501,11 +530,25 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subjectId, subject.getExam().isEmpty());
+        int exam_duration = JSONService.getTime(subject.getExam());
+
+        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subjectId, subject.getExam().isEmpty(),
+                        JSONService.getPassing_grade(subject.getExam()))
+                .stream()
+                .map(Candidate::new)
+                .peek(candidate -> {
+                    if(candidate.getDuration() == -1){
+                        candidate.setDuration(exam_duration);
+                    }
+                })
+                .toList();
 
         Map<String, Object> response = new HashMap<>();
         response.put("candidates", candidates);
         response.put("ok", true);
+        response.put("title", subject.getTitle());
+        response.put("banner", subject.getBanner());
+        response.put("has_exam", !subject.getExam().isEmpty());
         return ResponseEntity.ok().body(response);
     }
 
@@ -533,7 +576,7 @@ public class SubjectController {
             return ResponseService.notFound();
         }
 
-        if (subject.getTeacher_id() != user.getId() && user.getRole() != Role.CHIEF_TEACHER) {
+        if (subject.getTeacher_id() != user.getId()) {
             return ResponseService.failed("no_permission");
         }
 
@@ -544,7 +587,7 @@ public class SubjectController {
         String answers = resultTest.getAnswers();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("answers", answers);
+        response.put("answers", JSONService.getQuestionsWithYourAnswersRight(subject.getExam(), answers));
         response.put("ok", true);
         return ResponseEntity.ok().body(response);
     }
@@ -576,6 +619,7 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
+        resultExamRepository.delete(resultTest);
         mailService.sendExamFail(resultTest.getFirst_name(), user.getLast_name(), subject.getTitle(), resultTest.getEmail());
 
         Map<String, Object> response = new HashMap<>();
@@ -604,7 +648,7 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subject_id, subject.getExam().isEmpty());
+        List<CandidateProjection> candidates = resultExamRepository.findCandidatesByParent_id(subject_id, subject.getExam().isEmpty(), JSONService.getPassing_grade(subject.getExam()));
 
         String studentEmail;
         String first_name;
@@ -614,7 +658,7 @@ public class SubjectController {
 
         UserEntity student;
 
-        for (Candidate candidate : candidates) {
+        for (CandidateProjection candidate : candidates) {
             studentEmail = candidate.getEmail();
             student = userRepository.findByEmail(studentEmail).orElse(null);
 
@@ -673,16 +717,16 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subject_id, true);
+        List<CandidateProjection> candidates = resultExamRepository.findCandidatesByParent_id(subject_id, true, 0);
 
         String studentEmail;
         String subject_title = subject.getTitle();
         String first_name;
 
-        for (Candidate candidate : candidates) {
+        for (CandidateProjection candidate : candidates) {
             studentEmail = candidate.getEmail();
             first_name = candidate.getFirst_name();
-            mailService.sendSubjectCanceled(studentEmail, first_name , subject_title);
+            mailService.sendSubjectCanceled(studentEmail, first_name, subject_title);
         }
 
         resultExamRepository.deleteBySubjectId(subject_id);
@@ -715,36 +759,32 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        subject.set_end(false);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("ok", true);
-        return ResponseEntity.ok().body(response);
-    }
-
-    @PostMapping("get-archived-subjects")
-    public ResponseEntity<Object> getArchiveSubjects(HttpServletRequest req, @RequestParam(required = true) long subject_id) {
-        UserEntity user = AuthUtil.authorizedUser(req);
-
-        if (user == null) {
-            return ResponseService.unauthorized();
-        }
-
-        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
-
-        if (subject == null) {
+        try{
+            certificateService.presentCertificates(subject_id);
+        }catch(IOException e){
             return ResponseService.failed();
         }
 
-        if (subject.getTeacher_id() != user.getId()) {
-            return ResponseService.failed("no_permission");
+        educationMaterialRepository.findEntitiesBySubjectId(subject_id)
+                        .stream()
+                                .filter(temp -> !temp.is_test())
+                                        .forEach(temp -> storageService.deleteFile(temp.getContent()));
+
+        for(GradeEntity grade : gradeRepository.findBySubject(subject_id)){
+            if(JSONService.checkFiles(grade.getContent())){
+                for(String file : JSONService.getFiles(grade.getContent())){
+                    storageService.deleteFile("homework_resources/" + file);
+                }
+            }
         }
 
-        if(!subject.educationProcess()){
-            return ResponseService.failed();
-        }
+        tagSubjectRepository.delete(subject_id);
+        educationMaterialRepository.delete(subject_id);
+        tagSubjectRepository.delete(subject_id);
+        tagSubjectRepository.delete(subject_id);
+        tagSubjectRepository.delete(subject_id);
 
-        subject.set_end(false);
+        subjectRepository.delete(subject);
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);

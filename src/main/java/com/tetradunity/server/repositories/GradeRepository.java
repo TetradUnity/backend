@@ -3,13 +3,16 @@ package com.tetradunity.server.repositories;
 import com.tetradunity.server.entities.GradeEntity;
 import com.tetradunity.server.projections.GradeProjection;
 import com.tetradunity.server.projections.ShortInfoHomeworkProjection;
+import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface GradeRepository extends CrudRepository<GradeEntity, Long> {
+public interface GradeRepository extends JpaRepository<GradeEntity, Long> {
     @Query(value = "SELECT * FROM grades g " +
             "WHERE :student_id = student_id " +
             "AND :parent_id = parent_id " +
@@ -19,6 +22,12 @@ public interface GradeRepository extends CrudRepository<GradeEntity, Long> {
             "    ELSE (SELECT COUNT(*) = 1 FROM education_materials e WHERE e.id = :parent_id) " +
             "END", nativeQuery = true)
     Optional<GradeEntity> findByStudentAndParent(long student_id, long parent_id, String parent_type);
+
+    @Query(value = """
+            SELECT * FROM grades
+            WHERE subject_id = subject_id
+            """, nativeQuery = true)
+    List<GradeEntity> findBySubject(long subject_id);
 
     @Query(value = "SELECT g.id, u.first_name, u.last_name, u.avatar, g.value, g.time_edited_end as dispatch_time, g.attempt " +
             " FROM grades g " +
@@ -44,4 +53,15 @@ public interface GradeRepository extends CrudRepository<GradeEntity, Long> {
             "AND (g.subject_id IN :subject_id) " +
             "AND (g.student_id = :student_id)", nativeQuery = true)
     List<GradeProjection> findForMonth(long student_id, long[] subject_id, long from, long till);
+
+    @Query(value = """
+                SELECT result FROM grades
+                WHERE student_id = :student_id AND subject_id = :subject_id
+            """, nativeQuery = true)
+    List<Double> getGradesForStudentAndSubject(long student_id, long subject_id);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM grades WHERE subject_id = :subject_id", nativeQuery = true)
+    void delete(long subject_id);
 }

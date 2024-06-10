@@ -35,7 +35,7 @@ public class CheckValidService {
 
         pattern = Pattern.compile("^[A-Z][a-z]{1,}$");
         if (!pattern.matcher(first_name).matches() || !pattern.matcher(last_name).matches()) {
-            pattern = Pattern.compile("^[А-Я][а-я]{1,}$");
+            pattern = Pattern.compile("^[А-ЯІ][а-яі]{1,}$");
             if (!pattern.matcher(first_name).matches() || !pattern.matcher(last_name).matches()) {
                 return "incorrect_name";
             }

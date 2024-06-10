@@ -2,6 +2,8 @@ package com.tetradunity.server.repositories;
 
 import com.tetradunity.server.entities.ResultExamEntity;
 import com.tetradunity.server.models.users.Candidate;
+import com.tetradunity.server.projections.CandidateProjection;
+import com.tetradunity.server.services.JSONService;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,9 +25,11 @@ public interface ResultExamRepository extends JpaRepository<ResultExamEntity, Lo
     @Query(value = "select * from results_test where :uid = uid", nativeQuery = true)
     Optional<ResultExamEntity> findByUID(String uid);
 
-    @Query(value = "select id, email, first_name, last_name, result, duration from results_test " +
-            "where :id = parent_id and (:all OR result <> -1)", nativeQuery = true)
-    List<Candidate> findCandidatesByParent_id(long id, boolean all);
+    @Query(value = """
+            SELECT id, email, first_name, last_name, result, duration FROM results_test
+            WHERE :parent_id = parent_id
+            AND (:all OR (result > :passing_grade))""", nativeQuery = true)
+    List<CandidateProjection> findCandidatesByParent_id(long parent_id, boolean all, int passing_grade);
 
     @Query(value = "select * from subject", nativeQuery = true)
 

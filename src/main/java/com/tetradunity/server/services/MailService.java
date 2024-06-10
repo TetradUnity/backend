@@ -56,7 +56,7 @@ public class MailService {
         model.put("link_exam", link);
 
         StringWriter writer = new StringWriter();
-        configuration.getTemplate("startExam.ftlh")
+        configuration.getTemplate("letters/startExam.ftlh")
                 .process(model, writer);
         return writer.toString();
     }
@@ -83,7 +83,7 @@ public class MailService {
         model.put("subject_title", subject_title);
 
         StringWriter writer = new StringWriter();
-        configuration.getTemplate("examComplete.ftlh")
+        configuration.getTemplate("letters/examComplete.ftlh")
                 .process(model, writer);
         return writer.toString();
     }
@@ -110,7 +110,7 @@ public class MailService {
         model.put("subject_title", subject_title);
 
         StringWriter writer = new StringWriter();
-        configuration.getTemplate("examFail.ftlh")
+        configuration.getTemplate("letters/examFail.ftlh")
                 .process(model, writer);
         return writer.toString();
     }
@@ -138,7 +138,7 @@ public class MailService {
         model.put("password", password);
 
         StringWriter writer = new StringWriter();
-        configuration.getTemplate("auth.ftlh")
+        configuration.getTemplate("letters/auth.ftlh")
                 .process(model, writer);
         return writer.toString();
     }
@@ -163,7 +163,7 @@ public class MailService {
         model.put("link", link);
 
         StringWriter writer = new StringWriter();
-        configuration.getTemplate("recoveryPassword.ftlh")
+        configuration.getTemplate("letters/recoveryPassword.ftlh")
                 .process(model, writer);
         return writer.toString();
     }
@@ -188,7 +188,7 @@ public class MailService {
         model.put("last_name", last_name);
 
         StringWriter writer = new StringWriter();
-        configuration.getTemplate("applicationSubmitted.ftlh")
+        configuration.getTemplate("letters/applicationSubmitted.ftlh")
                 .process(model, writer);
         return writer.toString();
     }
@@ -213,7 +213,7 @@ public class MailService {
         model.put("subject_title", last_name);
 
         StringWriter writer = new StringWriter();
-        configuration.getTemplate("startSubjectRemind.ftlh")
+        configuration.getTemplate("letters/startSubjectRemind.ftlh")
                 .process(model, writer);
         return writer.toString();
     }
@@ -235,9 +235,10 @@ public class MailService {
     private String getSubjectCanceled(String first_name, String subject_title) {
         Map<String, Object> model = new HashMap<>();
         model.put("first_name", first_name);
+        model.put("subject_title", subject_title);
 
         StringWriter writer = new StringWriter();
-        configuration.getTemplate("subjectCanceled.ftlh")
+        configuration.getTemplate("letters/subjectCanceled.ftlh")
                 .process(model, writer);
         return writer.toString();
     }

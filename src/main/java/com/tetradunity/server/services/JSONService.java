@@ -176,7 +176,7 @@ public class JSONService {
                         throw new RuntimeException();
                     }
                 case "MULTY_ANSWER":
-                    rightAnswers = getRightAnswers(generalQuestion.getJSONArray("answer"));
+                    rightAnswers = getRightAnswers(generalQuestion.getJSONArray("answers"));
                     amountRightAnswers = rightAnswers.size();
                     setRightAnswers = new TreeSet<>();
                     selectedRightAnswers = 0;
@@ -195,7 +195,7 @@ public class JSONService {
                     result += Math.max(0, (selectedRightAnswers - selectedIncorrectAnswers) / amountRightAnswers);
                     break;
                 case "TEXT":
-                    if (consistValue(answer.getString(0), generalQuestion.getJSONArray("answer"))) {
+                    if (consistValue(answer.getString(0), generalQuestion.getJSONArray("answers"))) {
                         result++;
                     }
                     break;
@@ -245,13 +245,29 @@ public class JSONService {
         }
     }
 
+    public static List<String> getFiles(String json) {
+        try {
+            List<String> files = new ArrayList<>();
+            JSONArray JSONFiles = new JSONArray(json);
+            int length = JSONFiles.length();
+            String file;
+            for (int i = 0; i < length; i++) {
+                if (!patternFile.matcher(file = JSONFiles.getString(i)).matches()) {
+                    files.add(file);
+                }
+            }
+            return files;
+        } catch (RuntimeException ex) {
+            return new ArrayList<>();
+        }
+    }
+
     public static String getQuestionsWithRightAnswers(String testStr) {
         if (testStr == null) {
             return null;
         }
         JSONArray test = new JSONArray(testStr);
         JSONArray questions = new JSONArray();
-        questions.put(test.getJSONObject(0));
         JSONObject question;
         JSONObject temp;
         String type;
@@ -283,6 +299,9 @@ public class JSONService {
             throw new RuntimeException();
         }
         JSONArray questions = new JSONArray(test);
+        if(questions.length() < 2){
+            throw new RuntimeException();
+        }
         JSONArray proccessedQuestions = new JSONArray();
         JSONObject proccessedQuestion;
         JSONArray answers;
@@ -338,6 +357,9 @@ public class JSONService {
                 case "ONE_ANSWER":
                     existsCorrect = false;
                     set = new TreeSet<>();
+                    if(answers.length() < 2){
+                        throw new RuntimeException();
+                    }
                     for (int i = 0; i < answers.length(); i++) {
                         answer = answers.getJSONObject(i);
                         if ((text = answer.getString("content")).trim().isEmpty()) {
@@ -356,6 +378,9 @@ public class JSONService {
                     break;
                 case "MULTY_ANSWER":
                     set = new TreeSet<>();
+                    if(answers.length() < 2){
+                        throw new RuntimeException();
+                    }
                     for (int i = 0; i < answers.length(); i++) {
                         answer = answers.getJSONObject(i);
                         if ((text = answer.getString("content")).trim().isEmpty()) {
@@ -371,6 +396,9 @@ public class JSONService {
                     break;
                 case "TEXT":
                     set = new TreeSet<>();
+                    if(answers.isEmpty()){
+                        throw new RuntimeException();
+                    }
                     for (int i = 0; i < answers.length(); i++) {
                         answer = answers.getJSONObject(i);
                         if ((text = answer.getString("content")).trim().equals("")) {

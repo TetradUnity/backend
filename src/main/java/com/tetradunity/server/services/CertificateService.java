@@ -37,7 +37,8 @@ public class CertificateService {
     private StorageService storageService;
 
     private final static File certificateTemplate = new File("C:\\Users\\maksi\\IdeaProjects\\backend\\src\\main\\resources\\templates\\certificateTemplate.jpg");
-    private final static File fontFile =  new File("C:\\Users\\maksi\\IdeaProjects\\backend\\src\\main\\resources\\templates\\NotoSans-Italic-VariableFont_wdth,wght.ttf");
+    private final static File fontItalicFile =  new File("C:\\Users\\maksi\\IdeaProjects\\backend\\src\\main\\resources\\templates\\NotoSansItalic.ttf");
+    private final static File fontRobotoFile = new File("C:\\Users\\maksi\\IdeaProjects\\backend\\src\\main\\resources\\templates\\Roboto-Black.ttf");
     private final static File certificateFile = new File("C:\\Users\\maksi\\IdeaProjects\\backend\\src\\main\\resources\\templates\\certificate.pdf");
 
     public synchronized void presentCertificates(long subject_id) throws IOException {
@@ -86,7 +87,7 @@ public class CertificateService {
             contentStream = new PDPageContentStream(document, page);
             image = PDImageXObject.createFromFileByContent(certificateTemplate, document);
             contentStream.drawImage(image, 21, 58, 800, 480);
-            contentStream.setFont(PDType0Font.load(document, fontFile), 30);
+            contentStream.setFont(PDType0Font.load(document, fontRobotoFile), 30);
             contentStream.setNonStrokingColor(Color.BLACK);
             contentStream.beginText();
             contentStream.newLineAtOffset(120, 350);
@@ -104,7 +105,7 @@ public class CertificateService {
             contentStream.newLineAtOffset(120, 260);
             contentStream.showText(user.getFirst_name() + " " + user.getLast_name());
             contentStream.endText();
-            contentStream.setFont(PDType0Font.load(document, fontFile), 15);
+            contentStream.setFont(PDType0Font.load(document, fontItalicFile), 15);
             contentStream.beginText();
             contentStream.newLineAtOffset(710, 75);
             contentStream.showText(currentTime.get(Calendar.DAY_OF_MONTH) + "." + currentTime.get(Calendar.MONTH) + "." + currentTime.get(Calendar.YEAR));

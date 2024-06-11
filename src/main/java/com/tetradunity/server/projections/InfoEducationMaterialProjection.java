@@ -8,4 +8,6 @@ public interface InfoEducationMaterialProjection {
     boolean isTest();
 
     long getDeadline();
+
+    long getTime_created();
 }

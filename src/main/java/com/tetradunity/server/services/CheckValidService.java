@@ -22,12 +22,12 @@ public class CheckValidService {
         CheckValidService.userRepository = userRepository;
     }
 
-    public static String checkUser(UserEntity userEntity, boolean checkExists) {
+    public String checkUser(UserEntity userEntity, boolean checkExists) {
         return checkUser(userEntity.getEmail(), userEntity.getPassword(), userEntity.getFirst_name(),
                 userEntity.getLast_name(), checkExists);
     }
 
-    public static String checkUser(String email, String first_name, String last_name) {
+    public String checkUser(String email, String first_name, String last_name) {
         Pattern pattern = Pattern.compile("^[a-zA-Z][a-zA-Z0-9._%+-]{4,}@[a-zA-Z][a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
         if (!pattern.matcher(email).matches()) {
             return "incorrect_mail_format";
@@ -43,7 +43,7 @@ public class CheckValidService {
         return "ok";
     }
 
-    public static String checkUser(String email, String password, String first_name, String last_name,
+    public String checkUser(String email, String password, String first_name, String last_name,
                                    boolean checkExists) {
         if (email == null || password == null || first_name == null || last_name == null) {
             return "incorrect_data";

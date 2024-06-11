@@ -15,8 +15,9 @@ public class InfoEducationMaterial {
     private String title;
     private boolean is_test;
     private long deadline;
+    private long time_created;
 
     public InfoEducationMaterial(InfoEducationMaterialProjection projection) {
-        this(projection.getId(), projection.getTitle(), projection.isTest(), projection.getDeadline());
+        this(projection.getId(), projection.getTitle(), projection.isTest(), projection.getDeadline(), projection.getTime_created());
     }
 }

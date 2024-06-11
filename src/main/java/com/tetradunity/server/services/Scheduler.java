@@ -1,5 +1,6 @@
 package com.tetradunity.server.services;
 
+import com.amazonaws.auth.SdkClock;
 import com.tetradunity.server.projections.StartSubjectRemind;
 import com.tetradunity.server.repositories.PasswordRecoveryRequestRepository;
 import com.tetradunity.server.repositories.RefreshTokenRepository;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class Scheduler {
 
     @Scheduled(fixedDelay = 300_000)
     public void deleteExpired(){
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         refreshTokenRepository.deleteByExpiryDateBefore(now);
         passwordRecoveryRequestRepository.deleteByExpiryDateBefore();
     }

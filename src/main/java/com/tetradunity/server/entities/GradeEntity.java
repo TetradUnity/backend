@@ -1,5 +1,6 @@
 package com.tetradunity.server.entities;
 
+import com.tetradunity.server.models.grades.TypeGrade;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,37 +26,25 @@ public class GradeEntity {
     private String content = "";
     private long time_edited_end;
     private int attempt = 1;
-    long date = System.currentTimeMillis();
+    @Enumerated(EnumType.STRING)
+    private TypeGrade type;
+    long date = 0;
 
-    public GradeEntity(long student_id, long subject_id, long parent_id, String content, long time_edited_end, boolean auto_date) {
+    public GradeEntity(long student_id, long subject_id, long parent_id, long time_edited_end, TypeGrade type) {
         this.student_id = student_id;
         this.subject_id = subject_id;
         this.parent_id = parent_id;
-        this.content = content;
         this.time_edited_end = time_edited_end;
-        if (!auto_date) {
-            this.date = 0;
-        }
+        this.type = type;
     }
 
-    public GradeEntity(long student_id, long subject_id, long parent_id, long time_edited_end, boolean auto_date) {
+    public GradeEntity(long student_id, long subject_id, long parent_id, long time_edited_end, double value) {
         this.student_id = student_id;
         this.subject_id = subject_id;
         this.parent_id = parent_id;
         this.time_edited_end = time_edited_end;
-        if (!auto_date) {
-            this.date = 0;
-        }
-    }
-
-    public GradeEntity(long student_id, long subject_id, long parent_id, long time_edited_end, boolean auto_date, double value) {
-        this.student_id = student_id;
-        this.subject_id = subject_id;
-        this.parent_id = parent_id;
-        this.time_edited_end = time_edited_end;
-        if (!auto_date) {
-            this.date = 0;
-        }
         this.value = value;
+        this.type = TypeGrade.CONFERENCES;
+        this.date = System.currentTimeMillis();
     }
 }

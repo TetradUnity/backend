@@ -66,7 +66,7 @@ public class JSONService {
             question.put("type", type);
             question.put("title", temp.getString("title"));
             switch (type) {
-                case "MULTY_ANSWER":
+                case "MULTI_ANSWER":
                 case "ONE_ANSWER":
                     answers = temp.getJSONArray("answers");
                     answersProcessed = new JSONArray();
@@ -86,9 +86,10 @@ public class JSONService {
         return questions.toString();
     }
 
-    public static String getQuestionsWithYourAnswers(String testStr, String answersStr) throws RuntimeException {
-        JSONArray questions = new JSONArray(getQuestions(testStr, false));
-        JSONArray answers = new JSONArray(answersStr);
+    public static String getQuestionsWithYourAnswers(String testStr, String answersStr) {
+        try{
+            JSONArray questions = new JSONArray(getQuestions(testStr, false));
+            JSONArray answers = new JSONArray(answersStr);
         JSONArray result = new JSONArray();
         JSONObject question;
         JSONArray answer;
@@ -106,28 +107,32 @@ public class JSONService {
             result.put(question);
         }
         return result.toString();
+
+        } catch(RuntimeException e){return null;}
     }
 
-    public static String getQuestionsWithYourAnswersRight(String testStr, String answersStr) throws RuntimeException {
-        JSONArray questions = new JSONArray(getQuestionsWithRightAnswers(testStr));
-        JSONArray answers = new JSONArray(answersStr);
-        JSONArray result = new JSONArray();
-        JSONObject question;
-        JSONArray answer;
+    public static String getQuestionsWithYourAnswersRight(String testStr, String answersStr) {
+        try {
+            JSONArray questions = new JSONArray(getQuestionsWithRightAnswers(testStr));
+            JSONArray answers = new JSONArray(answersStr);
+            JSONArray result = new JSONArray();
+            JSONObject question;
+            JSONArray answer;
 
-        int length = questions.length();
+            int length = questions.length();
 
-        if (length != answers.length()) {
-            throw new IllegalArgumentException();
-        }
+            if (length != answers.length()) {
+                throw new IllegalArgumentException();
+            }
 
-        for (int i = 0; i < length; i++) {
-            question = questions.getJSONObject(i);
-            answer = answers.getJSONArray(i);
-            question.put("your_answer", answer);
-            result.put(question);
-        }
-        return result.toString();
+            for (int i = 0; i < length; i++) {
+                question = questions.getJSONObject(i);
+                answer = answers.getJSONArray(i);
+                question.put("your_answer", answer);
+                result.put(question);
+            }
+            return result.toString();
+        }catch(RuntimeException e){return null;}
     }
 
     public static double checkAnswers(String examStr, String answersStr) throws RuntimeException {
@@ -155,7 +160,7 @@ public class JSONService {
         int selectedRightAnswers;
         int selectedIncorrectAnswers;
         int amountAnswers;
-        int amountRightAnswers;
+        double amountRightAnswers;
 
         int index;
 
@@ -175,7 +180,7 @@ public class JSONService {
                     if (amountAnswers > 1) {
                         throw new RuntimeException();
                     }
-                case "MULTY_ANSWER":
+                case "MULTI_ANSWER":
                     rightAnswers = getRightAnswers(generalQuestion.getJSONArray("answers"));
                     amountRightAnswers = rightAnswers.size();
                     setRightAnswers = new TreeSet<>();
@@ -201,7 +206,7 @@ public class JSONService {
                     break;
             }
         }
-        return 100 * result / exam.length();
+        return 100 * result / answers.length();
     }
 
     private static boolean consistValue(String value, JSONArray list) {
@@ -263,35 +268,40 @@ public class JSONService {
     }
 
     public static String getQuestionsWithRightAnswers(String testStr) {
-        if (testStr == null) {
+        try {
+            if (testStr == null) {
+                return null;
+            }
+            JSONArray test = new JSONArray(testStr);
+            JSONArray questions = new JSONArray();
+            JSONObject question;
+            JSONObject temp;
+            String type;
+
+            for (int i = 1; i < test.length(); i++) {
+                temp = test.getJSONObject(i);
+                type = temp.getString("type");
+                question = new JSONObject();
+                question.put("type", type);
+                question.put("title", temp.getString("title"));
+                switch (type) {
+                    case "MULTI_ANSWER":
+                    case "ONE_ANSWER":
+                    case "TEXT":
+                        question.put("answers", temp.getJSONArray("answers"));
+                        break;
+                    default:
+                        throw new RuntimeException();
+
+                }
+                questions.put(question);
+            }
+
+            return questions.toString();
+        }
+        catch (RuntimeException e){
             return null;
         }
-        JSONArray test = new JSONArray(testStr);
-        JSONArray questions = new JSONArray();
-        JSONObject question;
-        JSONObject temp;
-        String type;
-
-        for (int i = 1; i < test.length(); i++) {
-            temp = test.getJSONObject(i);
-            type = temp.getString("type");
-            question = new JSONObject();
-            question.put("type", type);
-            question.put("title", temp.getString("title"));
-            switch (type) {
-                case "MULTY_ANSWER":
-                case "ONE_ANSWER":
-                case "TEXT":
-                    question.put("answers", temp.getJSONArray("answers"));
-                    break;
-                default:
-                    throw new RuntimeException();
-
-            }
-            questions.put(question);
-        }
-
-        return questions.toString();
     }
 
     public static String checkTest(String test) throws RuntimeException {
@@ -376,7 +386,7 @@ public class JSONService {
                         existsCorrect |= temp;
                     }
                     break;
-                case "MULTY_ANSWER":
+                case "MULTI_ANSWER":
                     set = new TreeSet<>();
                     if(answers.length() < 2){
                         throw new RuntimeException();
@@ -396,7 +406,7 @@ public class JSONService {
                     break;
                 case "TEXT":
                     set = new TreeSet<>();
-                    if(answers.isEmpty()){
+                    if(answers.length() == 0){
                         throw new RuntimeException();
                     }
                     for (int i = 0; i < answers.length(); i++) {
@@ -408,6 +418,10 @@ public class JSONService {
                             answers.remove(i--);
                         } else {
                             set.add(text);
+                        }
+                        for (Iterator<String> it = GeneralInfo.keys(); it.hasNext(); ) {
+                            String key = it.next();
+
                         }
                     }
                     break;

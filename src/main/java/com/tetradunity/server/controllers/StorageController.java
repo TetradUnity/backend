@@ -37,10 +37,8 @@ public class StorageController {
 
         if (switch (folder) {
             case "avatars" -> storageService.findRatio(file) == 1;
-            case "banners" -> between(storageService.findRatio(file), 4.03, 4.05);
+            case "banners" -> between(storageService.findRatio(file), 4, 4.1);
             case "exam_resources" -> role == Role.CHIEF_TEACHER;
-            case "education_materials" -> storageService.getFileExtension(file.getOriginalFilename()).equals(".html") &&
-                                                                                                        role == Role.TEACHER;
             case "education_material_resources" -> role == Role.TEACHER;
             case "homework_resources" -> role == Role.STUDENT;
             default -> false;

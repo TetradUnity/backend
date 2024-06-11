@@ -122,7 +122,7 @@ public class ConferenceController {
         GradeEntity grade = gradeRepository.findByStudentAndParent(user.getId(), conference_id, "conference").orElse(null);
 
         if(grade == null){
-            gradeRepository.save(new GradeEntity(user.getId(), subject_id, conference_id, current_time, true, result));
+            gradeRepository.save(new GradeEntity(user.getId(), subject_id, conference_id, 0, result));
         }
         else{
             grade.setValue(result);

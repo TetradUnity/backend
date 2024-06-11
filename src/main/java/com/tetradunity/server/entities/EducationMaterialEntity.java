@@ -21,8 +21,8 @@ public class EducationMaterialEntity {
     private boolean is_test;
     @Column(columnDefinition = "TEXT")
     private String content;
-
     private long deadline;
+    private long time_created = System.currentTimeMillis();
 
     public EducationMaterialEntity(long subject_id, String title, boolean is_test, String content, long deadline) {
         this.subject_id = subject_id;

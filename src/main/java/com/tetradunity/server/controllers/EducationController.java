@@ -1,13 +1,12 @@
 package com.tetradunity.server.controllers;
 
-import com.tetradunity.server.entities.EducationMaterialEntity;
-import com.tetradunity.server.entities.GradeEntity;
-import com.tetradunity.server.entities.SubjectEntity;
-import com.tetradunity.server.entities.UserEntity;
+import com.tetradunity.server.entities.*;
 import com.tetradunity.server.models.events.InfoEducationMaterial;
 import com.tetradunity.server.models.general.Role;
 import com.tetradunity.server.models.events.ShortInfoHomework;
 import com.tetradunity.server.models.general.StringModel;
+import com.tetradunity.server.models.grades.Grade;
+import com.tetradunity.server.models.grades.TypeGrade;
 import com.tetradunity.server.projections.ShortInfoHomeworkProjection;
 import com.tetradunity.server.repositories.EducationMaterialRepository;
 import com.tetradunity.server.repositories.GradeRepository;
@@ -52,9 +51,10 @@ public class EducationController {
         }
 
         SubjectEntity subject;
+        long subject_id;
 
         if (educationMaterial == null ||
-                (subject = subjectRepository.findById(educationMaterial.getSubject_id()).orElse(null)) == null
+                (subject = subjectRepository.findById(subject_id = educationMaterial.getSubject_id()).orElse(null)) == null
         ) {
             return ResponseService.failed();
         }
@@ -78,16 +78,14 @@ public class EducationController {
             return ResponseService.failed("test_very_short");
         }
 
-        if (!is_test && (deadline == 0 || deadline + 1_800_000 < System.currentTimeMillis())) {
+        if (!is_test && (deadline == 0 || deadline - 1_800_000 > System.currentTimeMillis())) {
             content = content.trim();
             if (content.length() < 15) {
                 return ResponseService.failed("content_very_short");
             }
             educationMaterial.setContent(storageService.uploadFile(storageService.convertStringToMultipartFile(content, ".txt"),
                     "education_materials"));
-        }
-
-        if (is_test) {
+        } else if (is_test) {
             if (deadline + 1_800_000 < System.currentTimeMillis()) {
                 return ResponseService.failed("incorrect_time");
             }
@@ -102,12 +100,18 @@ public class EducationController {
 
         educationMaterial = educationMaterialRepository.save(educationMaterial);
 
+        if(deadline != 0){
+            for(StudentSubjectEntity student : studentSubjectRepository.findBySubject_id(subject_id)){
+                gradeRepository.save(new GradeEntity(student.getStudent_id(), subject_id, educationMaterial.getId(), is_test ? 0 : deadline,
+                        is_test ? TypeGrade.TEST : TypeGrade.EDUCATION_MATERIAL));
+            }
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
         response.put("education_material", educationMaterial);
         return ResponseEntity.ok().body(response);
     }
-
 
     @GetMapping("get-education-materials")
     public ResponseEntity<Object> getEducationMaterials(HttpServletRequest req, @RequestParam long subject_id) {
@@ -164,8 +168,7 @@ public class EducationController {
             return ResponseService.failed();
         }
 
-        if (user.getRole() != Role.CHIEF_TEACHER &&
-                user_id != subject.getTeacher_id() &&
+        if (user_id != subject.getTeacher_id() &&
                 studentSubjectRepository.findByStudent_idAndSubject_id(user_id, subject_id).orElse(null) == null) {
             return ResponseService.failed("no_permission");
         }
@@ -182,7 +185,8 @@ public class EducationController {
         if (educationMaterial.is_test()) {
             if (user.getRole() == Role.STUDENT) {
                 GradeEntity grade = gradeRepository.findByStudentAndParent(user_id, education_id, "education_material").orElse(null);
-                if (deadline < current_time) {
+
+                if (deadline < current_time + 600_000) {
                     if (grade == null) {
                         return ResponseService.failed();
                     }
@@ -197,24 +201,30 @@ public class EducationController {
 
                 int duration = JSONService.getTime(content);
 
-                if (grade == null) {
-                    new GradeEntity(user_id, subject_id, education_id,
-                            current_time + duration, false);
-                } else {
-                    if (current_time < grade.getTime_edited_end()) {
-                        return ResponseService.failed("no_access_now");
-                    }
-                    int attempt = grade.getAttempt();
+                int attempt = grade.getAttempt();
+
+                if (current_time > grade.getTime_edited_end()) {
                     if (attempt >= JSONService.getCount_attempt(content)) {
-                        return ResponseService.failed("too_many_tries");
+                        response.put("ok", true);
+                        response.put("test", JSONService.getQuestionsWithYourAnswers(content, grade.getContent()));
+                        return ResponseEntity.ok().body(response);
                     }
                     grade.setAttempt(++attempt);
-                    grade.setTime_edited_end(current_time + duration);
+                    long time_end = current_time + duration;
+                    if(time_end > deadline){
+                        time_end = deadline;
+                    }
+                    grade.setTime_edited_end(time_end);
+                    grade.setDate(time_end);
                     grade.setContent("");
                     gradeRepository.save(grade);
+                    response.put("ok", true);
+                    response.put("test", JSONService.getQuestions(content, true));
+                    return ResponseEntity.ok().body(response);
                 }
                 response.put("ok", true);
                 response.put("test", JSONService.getQuestions(content, true));
+                response.put("saved_answer", grade.getContent());
                 return ResponseEntity.ok().body(response);
             } else {
                 response.put("test", content);
@@ -224,6 +234,57 @@ public class EducationController {
                     .body(storageService.downloadFile(content));
         }
         return ResponseService.failed();
+    }
+
+    @PostMapping("update-answers-test")
+    public ResponseEntity<Object> updateAnswers(HttpServletRequest req, @RequestParam long education_id,
+                                                        @RequestBody StringModel requestModel) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+        EducationMaterialEntity educationMaterial = educationMaterialRepository.findById(education_id).orElse(null);
+
+        if (educationMaterial == null) {
+            return ResponseService.notFound();
+        }
+
+        if (user.getRole() != Role.STUDENT) {
+            return ResponseService.failed();
+        }
+
+        if(!educationMaterial.is_test()){
+            return ResponseService.notFound();
+        }
+
+        GradeEntity grade = gradeRepository.findByStudentAndParent(user.getId(), education_id, "test").orElse(null);
+
+        if(grade == null){
+            return ResponseService.notFound();
+        }
+
+        if (grade.getTime_edited_end() < System.currentTimeMillis()) {
+            return ResponseService.failed("late");
+        }
+
+        String homework = requestModel.getModel();
+        double result;
+
+        try {
+            result = JSONService.checkAnswers(educationMaterial.getContent(), homework);
+        } catch (RuntimeException ex) {
+            return ResponseService.failed();
+        }
+        grade.setContent(homework);
+        grade.setValue(result);
+
+        gradeRepository.save(grade);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("send-homework")
@@ -265,18 +326,21 @@ public class EducationController {
 
         GradeEntity grade = gradeRepository.findByStudentAndParent(user_id, education_id, "education_material").orElse(null);
 
+        if (grade == null) {
+            return ResponseService.failed();
+        }
+
         long current_time = System.currentTimeMillis();
 
 
         Map<String, Object> response = new HashMap<>();
         if (educationMaterial.is_test()) {
-            if (grade == null) {
-                return ResponseService.failed();
-            }
-            if (grade.getTime_edited_end() < System.currentTimeMillis()) {
+            if (grade.getTime_edited_end() < current_time) {
                 return ResponseService.failed("late");
             }
+
             double result;
+
             try {
                 result = JSONService.checkAnswers(educationMaterial.getContent(), homework);
             } catch (RuntimeException ex) {
@@ -290,12 +354,17 @@ public class EducationController {
             response.put("ok", true);
             response.put("result", result);
         } else {
-            if ((grade == null || grade.getValue() == -1) && JSONService.checkFiles(homework)) {
-                gradeRepository.save(new GradeEntity(user_id, subject_id, education_id,
-                        current_time, false));
-                response.put("ok", true);
-            } else {
-                return ResponseService.failed();
+            if(current_time > educationMaterial.getDeadline()){
+                return ResponseService.failed("late");
+            }
+
+            if(educationMaterial.getDeadline() == 0){
+                return ResponseService.notFound();
+            }
+
+            if (JSONService.checkFiles(homework)) {
+                grade.setDate(current_time);
+                grade.setContent(homework);
             }
         }
         return ResponseEntity.ok().body(response);

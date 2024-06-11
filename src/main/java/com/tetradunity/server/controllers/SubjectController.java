@@ -51,6 +51,8 @@ public class SubjectController {
     private EducationMaterialRepository educationMaterialRepository;
     @Autowired
     private GradeRepository gradeRepository;
+    @Autowired
+    private CheckValidService checkValidService;
 
     private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -172,6 +174,31 @@ public class SubjectController {
             return ResponseEntity.ok().body(response);
         }
         return ResponseService.failed("no_permission");
+    }
+
+    @GetMapping("get-subjects")
+    public ResponseEntity<Object> getSubjects(HttpServletRequest req) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+        if(user.getRole() == Role.CHIEF_TEACHER){
+            return ResponseService.notFound();
+        }
+
+        long user_id = user.getId();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        response.put("subjects", (user.getRole() == Role.STUDENT ? subjectRepository.findStudentSubjects(user_id) :
+                subjectRepository.findTeacherSubjects(user_id))
+                .stream()
+                .map(ShortInfoSubject::new)
+                .toList());
+        return ResponseEntity.ok().body(response);
+
     }
 
     @GetMapping("get")
@@ -304,12 +331,16 @@ public class SubjectController {
         user = user == null ? userRepository.findByEmail(email).orElse(null) : null;
 
         if (user != null) {
+            if(user.getRole() != Role.STUDENT){
+                return ResponseService.failed("no_access");
+            }
+
             first_name = user.getFirst_name();
             last_name = user.getLast_name();
         } else {
             first_name = request.getFirst_name();
             last_name = request.getLast_name();
-            String validData = CheckValidService.checkUser(email, first_name, last_name);
+            String validData = checkValidService.checkUser(email, first_name, last_name);
 
             if (!validData.equals("ok")) {
                 return ResponseService.failed(validData);
@@ -373,6 +404,7 @@ public class SubjectController {
             Map<String, Object> response = new HashMap<>();
             response.put("exam", JSONService.getQuestions(exam, false));
             response.put("time_end", resultExam.getTime_end());
+            response.put("your-answer", resultExam.getAnswers());
             response.put("ok", true);
             return ResponseEntity.ok().body(response);
         }
@@ -667,7 +699,7 @@ public class SubjectController {
                 first_name = candidate.getFirst_name();
                 last_name = candidate.getLast_name();
                 student = new UserEntity(studentEmail, passwordEncoder.encode(password), first_name, last_name, Role.STUDENT);
-                String valid = CheckValidService.checkUser(student, false);
+                String valid = checkValidService.checkUser(student, false);
                 if (!valid.equals("ok")) {
                     continue;
                 }
@@ -723,10 +755,15 @@ public class SubjectController {
         String subject_title = subject.getTitle();
         String first_name;
 
+        boolean has_exam = !subject.getExam().isEmpty();
+        int passing_grade = JSONService.getPassing_grade(subject.getExam());
+
         for (CandidateProjection candidate : candidates) {
             studentEmail = candidate.getEmail();
             first_name = candidate.getFirst_name();
-            mailService.sendSubjectCanceled(studentEmail, first_name, subject_title);
+            if(!has_exam || candidate.getResult() >= passing_grade){
+                mailService.sendSubjectCanceled(studentEmail, first_name, subject_title);
+            }
         }
 
         resultExamRepository.deleteBySubjectId(subject_id);

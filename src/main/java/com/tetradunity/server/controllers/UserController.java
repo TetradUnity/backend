@@ -33,6 +33,18 @@ public class UserController {
 
     private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
+    @GetMapping("/check-authorized")
+    public ResponseEntity<Object> checkAuthorized(HttpServletRequest req){
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
     @GetMapping("/exists")
     public ResponseEntity<Object> getInfo(@RequestParam String email) {
         if (email == null) {
@@ -103,7 +115,7 @@ public class UserController {
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {
-            return ResponseService.failed();
+            return ResponseService.unauthorized();
         }
 
         UserEntity userInfo = (userRepository.findById(id)).orElse(null);

@@ -31,11 +31,13 @@ import java.util.regex.Pattern;
 public class AuthController {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    MailService mailService;
+    private MailService mailService;
     @Autowired
-    PasswordRecoveryRequestRepository passwordRecoveryRequestRepository;
+    private PasswordRecoveryRequestRepository passwordRecoveryRequestRepository;
+    @Autowired
+    private CheckValidService checkValidService;
 
     private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -97,7 +99,7 @@ public class AuthController {
                 ResponseService.failed();
             }
 
-            String validData = CheckValidService.checkUser(email, password, first_name, last_name, true);
+            String validData = checkValidService.checkUser(email, password, first_name, last_name, true);
 
             if (!validData.equals("ok")) {
                 return ResponseService.failed(validData);

@@ -25,7 +25,7 @@ public class GradeEntity {
     @Column(columnDefinition = "TEXT")
     private String content = "";
     private long time_edited_end;
-    private int attempt = 1;
+    private int attempt = 0;
     @Enumerated(EnumType.STRING)
     private TypeGrade type;
     long date = 0;
@@ -46,5 +46,9 @@ public class GradeEntity {
         this.value = value;
         this.type = TypeGrade.CONFERENCES;
         this.date = System.currentTimeMillis();
+    }
+
+    public void incrementAttempt(){
+        this.attempt++;
     }
 }

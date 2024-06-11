@@ -44,6 +44,12 @@ public class JSONService {
         }
     }
 
+    public static int getAmountQuestion(String test){
+        try{
+            return new JSONArray(test).length() - 1;
+        }catch(RuntimeException e){return 0;}
+    }
+
     public static String getQuestions(String testStr, boolean withGeneralInfo) throws RuntimeException {
         if (testStr == null) {
             return null;

@@ -35,7 +35,7 @@ public class EducationMaterialEntity {
 
     public EducationMaterialEntity(EducationMaterialCreate material){
         this(
-                material.getSubject_id(), material.getTitle(), material.is_test(),
+                material.getSubject_id(), material.getTitle(), material.getIs_test(),
                 material.getContent(), material.getDeadline()
         );
     }

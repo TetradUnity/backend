@@ -14,8 +14,9 @@ import java.util.List;
 
 public interface EducationMaterialRepository extends JpaRepository<EducationMaterialEntity, Long> {
     @Query(value = """
-            SELECT id, title, is_test, deadline, time_created FROM education_materials 
+            SELECT id, title, is_test, deadline, time_created FROM education_materials
             WHERE :subject_id = subject_id
+            ORDER BY time_created DESC
             LIMIT 15 OFFSET :pos""", nativeQuery = true)
     List<InfoEducationMaterialProjection> findBySubjectId(long subject_id, int pos);
 

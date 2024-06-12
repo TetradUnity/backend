@@ -40,7 +40,7 @@ public class StorageController {
             case "banners" -> between(storageService.findRatio(file), 4, 4.1);
             case "exam_resources" -> role == Role.CHIEF_TEACHER;
             case "education_material_resources" -> role == Role.TEACHER;
-            case "homework_resources" -> role == Role.STUDENT;
+            case "homework" -> role == Role.STUDENT;
             default -> false;
         }) {
             String path = storageService.uploadFile(file, folder);

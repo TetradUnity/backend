@@ -12,7 +12,7 @@ import lombok.Setter;
 public class EducationMaterialCreate {
     private String title;
     private long subject_id;
-    private boolean is_test;
+    private Boolean is_test;
     private String content;
     private long deadline;
 }

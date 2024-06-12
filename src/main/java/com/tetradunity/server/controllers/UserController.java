@@ -69,43 +69,19 @@ public class UserController {
     }
 
     @GetMapping("/get")
-    public ResponseEntity<Object> getInfo(HttpServletRequest req,
-                                          @RequestParam(name = "id", required = false, defaultValue = "0") long id) {
-        UserEntity user = AuthUtil.authorizedUser(req);
+    public ResponseEntity<Object> getInfo(HttpServletRequest req, @RequestParam(required = false, defaultValue = "0") long id) {
+        UserEntity user = userRepository.findById(id).orElse(null);
 
-        Role myRole;
-
-        boolean isGuest;
-
-        if (user == null) {
-            myRole = Role.STUDENT;
-            isGuest = true;
-        }
-        else{
-            myRole = user.getRole();
-            isGuest = false;
-        }
-
-        if (id != 0 && (isGuest || id != user.getId())) {
-            user = userRepository.findById(id).orElse(null);
+        if(user == null){
+            user = AuthUtil.authorizedUser(req);
             if(user == null){
                 return ResponseService.notFound();
             }
-            if(myRole == Role.STUDENT){
-                if (user.getRole() == Role.STUDENT) {
-                    user = null;
-                }
-            }
-        }
-
-        if(user == null){
-            return ResponseService.notFound();
         }
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
         response.put("user", new User(user));
-
         return ResponseEntity.ok().body(response);
     }
 

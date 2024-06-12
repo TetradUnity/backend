@@ -40,9 +40,10 @@ public interface GradeRepository extends JpaRepository<GradeEntity, Long> {
             ) as reason
             FROM grades g
             WHERE subject_id = :subject_id
+            AND g.value > 0 AND g.student_id = :student_id
             LIMIT 15 OFFSET :pos
             """, nativeQuery = true)
-    List<GradeProjection> findBySubject(long subject_id, int pos);
+    List<GradeProjection> findBySubject(long student_id, long subject_id, int pos);
 
     @Query(value = "SELECT g.id, u.first_name, u.last_name, u.avatar, g.value, g.time_edited_end as dispatch_time, g.attempt " +
             " FROM grades g " +

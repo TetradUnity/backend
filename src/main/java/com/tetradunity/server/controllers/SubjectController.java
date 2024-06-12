@@ -242,8 +242,7 @@ public class SubjectController {
     }
 
     @GetMapping("get-students")
-    public ResponseEntity<Object> getAnnounceSubjects(HttpServletRequest req, @RequestParam(name = "page", required = false, defaultValue = "1") int page,
-                                                                @RequestParam long subject_id) {
+    public ResponseEntity<Object> getAnnounceSubjects(HttpServletRequest req, @RequestParam long subject_id) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {

@@ -35,10 +35,10 @@ public class JSONService {
         }
     }
 
-    public static int getCount_attempt(String exam) {
+    public static int getCount_attempts(String exam) {
         try {
             JSONArray questions = new JSONArray(exam);
-            return questions.getJSONObject(0).getInt("count_attempt");
+            return questions.getJSONObject(0).getInt("count_attempts");
         } catch (JSONException ex) {
             return 1;
         }
@@ -239,16 +239,18 @@ public class JSONService {
         return rightAnswers;
     }
 
-    private static final Pattern patternFile = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}.[a-b0-9]{3,}$");
+    private static final Pattern patternFile = Pattern.compile("^[a-zA-Z0-9-]{1,40}\\.[a-zA-Z0-9]{3,}$");
 
     public static boolean checkFiles(String json) {
         try {
             JSONArray files = new JSONArray(json);
-            int length = files.length();
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < files.length(); i++) {
+                System.out.println("Checking file: " + files.getString(i));
                 if (!patternFile.matcher(files.getString(i)).matches()) {
+                    System.out.println(1);
                     return false;
                 }
+                System.out.println(2);
             }
             return true;
         } catch (RuntimeException ex) {
@@ -349,7 +351,7 @@ public class JSONService {
                 case "viewing_correct_answers":
                     GeneralInfo.getBoolean(key);
                     break;
-                case "count_attempt":
+                case "count_attempts":
                     val = GeneralInfo.getInt(key);
                     if (val < 0 || val > 3) {
                         throw new RuntimeException();

@@ -5,7 +5,7 @@ public interface InfoEducationMaterialProjection {
 
     String getTitle();
 
-    boolean isTest();
+    Boolean getIs_test();
 
     long getDeadline();
 

@@ -31,7 +31,7 @@ public interface UserRepository extends CrudRepository<UserEntity, Long> {
 	List<StartSubjectRemind> findUserRemind();
 
 	@Query(value = """
-			SELECT * FROM users u
+			SELECT u.* FROM users u
 			JOIN student_subjects st ON u.id = st.student_id
 			WHERE st.subject_id = :subject_id
 			""", nativeQuery = true)

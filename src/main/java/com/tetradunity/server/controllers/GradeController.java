@@ -94,11 +94,15 @@ public class GradeController {
             return ResponseService.failed("no_access");
         }
 
+        if(page < 1){
+            return ResponseService.failed();
+        }
+
         int pos = (page - 1) * 15;
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
-        response.put("grades", gradeRepository.findBySubject(subject_id, pos)
+        response.put("grades", gradeRepository.findBySubject(user.getId(), subject_id, pos)
                 .stream()
                 .map(Grade::new)
                 .toList());

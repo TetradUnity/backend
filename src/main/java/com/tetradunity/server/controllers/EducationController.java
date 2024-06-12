@@ -51,6 +51,8 @@ public class EducationController {
             return ResponseService.unauthorized();
         }
 
+        System.out.println(educationMaterial.getIs_test());
+
         SubjectEntity subject;
         long subject_id;
 
@@ -68,7 +70,7 @@ public class EducationController {
             return ResponseService.failed("no_permission");
         }
 
-        boolean is_test = educationMaterial.is_test();
+        boolean is_test = educationMaterial.getIs_test();
         long deadline = educationMaterial.getDeadline();
 
         String content = educationMaterial.getContent();
@@ -93,7 +95,7 @@ public class EducationController {
             try {
                 educationMaterial.setContent(JSONService.checkTest(content));
             } catch (RuntimeException ex) {
-                return ResponseService.failed();
+                return ResponseService.failed("incorrect-format-test");
             }
         } else {
             return ResponseService.failed();
@@ -132,16 +134,19 @@ public class EducationController {
             return ResponseService.failed("no_permission");
         }
 
+        if(page < 1){
+            return ResponseService.failed();
+        }
+
         int pos = (page - 1) * 15;
 
-        List<InfoEducationMaterial> educationMaterials = educationMaterialRepository
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        response.put("education_materials", educationMaterialRepository
                 .findBySubjectId(subject_id, pos)
                 .stream()
                 .map(InfoEducationMaterial::new)
-                .collect(Collectors.toList());
-        Map<String, Object> response = new HashMap<>();
-        response.put("ok", true);
-        response.put("education_materials", educationMaterials);
+                .collect(Collectors.toList()));
         return ResponseEntity.ok().body(response);
     }
 
@@ -181,25 +186,34 @@ public class EducationController {
         String content = educationMaterial.getContent();
         Map<String, Object> response = new HashMap<>();
 
+        GradeEntity grade = gradeRepository.findByStudentAndParent(user.getId(), education_id, "education_material").orElse(null);
+        if (grade == null) {
+            return ResponseService.failed();
+        }
+
+        response.put("title", educationMaterial.getTitle());
+        response.put("date", educationMaterial.getTime_created());
+        response.put("deadline", educationMaterial.getDeadline());
+
         if (educationMaterial.is_test()) {
             response.put("ok", true);
             if (user.getRole() == Role.STUDENT) {
-                GradeEntity grade = gradeRepository.findByStudentAndParent(user.getId(), education_id, "education_material").orElse(null);
-
-                if (grade == null) {
-                    return ResponseService.failed();
-                }
                 response.put("your_attempts", grade.getAttempt());
-                response.put("available_attempt", JSONService.getCount_attempt(content));
+                response.put("available_attempt", JSONService.getCount_attempts(content));
                 response.put("amount_questions", JSONService.getAmountQuestion(content));
                 response.put("duration", JSONService.getTime(content));
+                response.put("grade", grade.getValue());
             } else {
                 response.put("test", content);
             }
             return ResponseEntity.ok().body(response);
         } else {
-            return ResponseEntity.ok().contentType(MediaType.valueOf(storageService.determineFileType(content)))
-                    .body(storageService.downloadFile(content));
+            if(educationMaterial.getDeadline() < System.currentTimeMillis()){
+                response.put("grade", grade.getValue());
+            }
+            response.put("content", new String(storageService.downloadFile(content)));
+            response.put("homework", grade.getContent());
+            return ResponseEntity.ok().body(response);
         }
     }
 
@@ -252,7 +266,7 @@ public class EducationController {
         int attempt = grade.getAttempt();
 
         if (current_time > grade.getTime_edited_end()) {
-            if (attempt >= JSONService.getCount_attempt(content)) {
+            if (attempt >= JSONService.getCount_attempts(content)) {
                 response.put("ok", true);
                 response.put("test", JSONService.getQuestionsWithYourAnswers(content, grade.getContent()));
                 return ResponseEntity.ok().body(response);
@@ -373,6 +387,7 @@ public class EducationController {
 
 
         Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
         if (educationMaterial.is_test()) {
             if (grade.getTime_edited_end() < current_time) {
                 return ResponseService.failed("late");
@@ -391,7 +406,6 @@ public class EducationController {
             grade.setDate(current_time);
             grade.incrementAttempt();
             gradeRepository.save(grade);
-            response.put("ok", true);
             response.put("result", result);
         } else {
             if(current_time > educationMaterial.getDeadline()){
@@ -405,6 +419,10 @@ public class EducationController {
             if (JSONService.checkFiles(homework)) {
                 grade.setDate(current_time);
                 grade.setContent(homework);
+                gradeRepository.save(grade);
+            }
+            else{
+                return ResponseService.failed();
             }
         }
         return ResponseEntity.ok().body(response);

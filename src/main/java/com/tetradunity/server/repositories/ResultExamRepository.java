@@ -27,7 +27,7 @@ public interface ResultExamRepository extends JpaRepository<ResultExamEntity, Lo
 
     @Query(value = """
             SELECT id, email, first_name, last_name, result, duration FROM results_test
-            WHERE :parent_id = parent_id
+            WHERE parent_id = :parent_id
             AND (:all OR (result > :passing_grade))""", nativeQuery = true)
     List<CandidateProjection> findCandidatesByParent_id(long parent_id, boolean all, int passing_grade);
 

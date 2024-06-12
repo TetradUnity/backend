@@ -6,16 +6,14 @@ import com.tetradunity.server.models.subjects.*;
 import com.tetradunity.server.models.tests.AnswersTest;
 import com.tetradunity.server.models.tests.ExaminationRequest;
 import com.tetradunity.server.models.users.Candidate;
+import com.tetradunity.server.models.users.ShortInfoStudent;
 import com.tetradunity.server.projections.AnnounceSubjectProjection;
 import com.tetradunity.server.projections.CandidateProjection;
+import com.tetradunity.server.projections.NoRatedTaskProjection;
 import com.tetradunity.server.repositories.*;
 import com.tetradunity.server.services.*;
 import com.tetradunity.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/subject")
@@ -192,11 +189,18 @@ public class SubjectController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
-        response.put("subjects", (user.getRole() == Role.STUDENT ? subjectRepository.findStudentSubjects(user_id) :
-                subjectRepository.findTeacherSubjects(user_id))
-                .stream()
-                .map(ShortInfoSubject::new)
-                .toList());
+        if(user.getRole() == Role.STUDENT){
+            response.put("subjects", subjectRepository.findStudentSubjects(user_id)
+                    .stream()
+                    .map(ShortInfoStudentSubject::new)
+                    .toList());
+        }
+        else{
+            response.put("subjects", (subjectRepository.findTeacherSubjects(user_id)
+                    .stream()
+                    .map(ShortInfoTeacherSubject::new)
+                    .toList()));
+        }
         return ResponseEntity.ok().body(response);
 
     }
@@ -217,7 +221,7 @@ public class SubjectController {
         }
 
         if (studentSubjectRepository.findByStudent_idAndSubject_id(user.getId(), subjectId).isPresent() ||
-                subjectEntity.getTeacher_id() == user.getId() || user.getRole() == Role.CHIEF_TEACHER
+                subjectEntity.getTeacher_id() == user.getId()
         ) {
             UserEntity teacher = userRepository.findById(subjectEntity.getTeacher_id()).orElse(null);
 
@@ -228,16 +232,39 @@ public class SubjectController {
             List<UserEntity> students = new ArrayList<>();
             List<StudentSubjectEntity> studentsSubject = studentSubjectRepository.findBySubject_id(subjectId);
             UserEntity student;
-            for (StudentSubjectEntity studentSubject : studentsSubject) {
-                if ((student = userRepository.findById(studentSubject.getStudent_id()).orElse(null))
-                        != null) {
-                    students.add(student);
-                }
-            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("ok", true);
-            response.put("subject", new Subject(subjectEntity, teacher, students));
+            response.put("subject", new Subject(subjectEntity, teacher));
+            return ResponseEntity.ok().body(response);
+        }
+        return ResponseService.failed("no_permission");
+    }
+
+    @GetMapping("get-students")
+    public ResponseEntity<Object> getAnnounceSubjects(HttpServletRequest req, @RequestParam(name = "page", required = false, defaultValue = "1") int page,
+                                                                @RequestParam long subject_id) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+        SubjectEntity subjectEntity = subjectRepository.findById(subject_id).orElse(null);
+
+        if (subjectEntity == null) {
+            return ResponseService.failed();
+        }
+
+        if (studentSubjectRepository.findByStudent_idAndSubject_id(user.getId(), subject_id).isPresent() ||
+                subjectEntity.getTeacher_id() == user.getId()
+        ) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("ok", true);
+            response.put("students", userRepository.findBySubjectId(subject_id)
+                    .stream()
+                    .map(ShortInfoStudent::new)
+                    .toList());
             return ResponseEntity.ok().body(response);
         }
         return ResponseService.failed("no_permission");
@@ -698,12 +725,7 @@ public class SubjectController {
                 password = UserService.generatePassword();
                 first_name = candidate.getFirst_name();
                 last_name = candidate.getLast_name();
-                student = new UserEntity(studentEmail, passwordEncoder.encode(password), first_name, last_name, Role.STUDENT);
-                String valid = checkValidService.checkUser(student, false);
-                if (!valid.equals("ok")) {
-                    continue;
-                }
-                student = userRepository.save(student);
+                student = userRepository.save(new UserEntity(studentEmail, passwordEncoder.encode(password), first_name, last_name, Role.STUDENT));
 
                 mailService.sendAuth(first_name, last_name, subject_title, password, studentEmail);
             }
@@ -794,6 +816,16 @@ public class SubjectController {
 
         if(!subject.educationProcess()){
             return ResponseService.failed();
+        }
+
+        NoRatedTaskProjection noRatedTask = gradeRepository.findNoRateTask(subject_id).orElse(null);
+
+        if(noRatedTask != null){
+            Map<String, Object> response = new HashMap<>();
+            response.put("ok", true);
+            response.put("no_rate_task_id", noRatedTask.getId());
+            response.put("no_rate_task_title", noRatedTask.getTitle());
+            return ResponseEntity.ok().body(response);
         }
 
         try{

@@ -13,8 +13,11 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
 public interface EducationMaterialRepository extends JpaRepository<EducationMaterialEntity, Long> {
-    @Query(value = "select id, title, is_test, deadline, time_created from education_materials where :subject_id = subject_id", nativeQuery = true)
-    List<InfoEducationMaterialProjection> findBySubjectId(long subject_id);
+    @Query(value = """
+            SELECT id, title, is_test, deadline, time_created FROM education_materials 
+            WHERE :subject_id = subject_id
+            LIMIT 15 OFFSET :pos""", nativeQuery = true)
+    List<InfoEducationMaterialProjection> findBySubjectId(long subject_id, int pos);
 
     @Query(value = "select * from education_materials where :subject_id = subject_id", nativeQuery = true)
     List<EducationMaterialEntity> findEntitiesBySubjectId(long subject_id);

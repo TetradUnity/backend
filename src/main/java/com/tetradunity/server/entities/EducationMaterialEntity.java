@@ -1,5 +1,6 @@
 package com.tetradunity.server.entities;
 
+import com.tetradunity.server.models.events.EducationMaterialCreate;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,5 +31,12 @@ public class EducationMaterialEntity {
         this.is_test = is_test;
         this.content = content;
         this.deadline = deadline;
+    }
+
+    public EducationMaterialEntity(EducationMaterialCreate material){
+        this(
+                material.getSubject_id(), material.getTitle(), material.is_test(),
+                material.getContent(), material.getDeadline()
+        );
     }
 }

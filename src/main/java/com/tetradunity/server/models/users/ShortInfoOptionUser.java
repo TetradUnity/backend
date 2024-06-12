@@ -10,15 +10,17 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShortInfoUser {
+public class ShortInfoOptionUser {
     private long id;
 
     private String email, first_name, last_name;
+    private String avatar;
 
-    public ShortInfoUser(UserEntity userEntity) {
+    public ShortInfoOptionUser(UserEntity userEntity) {
         this.id = userEntity.getId();
         this.email = userEntity.getEmail();
         this.first_name = userEntity.getFirst_name();
         this.last_name = userEntity.getLast_name();
+        this.avatar = userEntity.getAvatar();
     }
 }

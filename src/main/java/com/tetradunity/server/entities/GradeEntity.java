@@ -36,6 +36,9 @@ public class GradeEntity {
         this.parent_id = parent_id;
         this.time_edited_end = time_edited_end;
         this.type = type;
+        if(type != TypeGrade.EDUCATION_MATERIAL){
+            this.value = 0;
+        }
     }
 
     public GradeEntity(long student_id, long subject_id, long parent_id, long time_edited_end, double value) {

@@ -29,4 +29,11 @@ public interface UserRepository extends CrudRepository<UserEntity, Long> {
 				AND s.is_start
 			""", nativeQuery = true)
 	List<StartSubjectRemind> findUserRemind();
+
+	@Query(value = """
+			SELECT * FROM users u
+			JOIN student_subjects st ON u.id = st.student_id
+			WHERE st.subject_id = :subject_id
+			""", nativeQuery = true)
+	List<UserEntity> findBySubjectId(long subject_id);
 }

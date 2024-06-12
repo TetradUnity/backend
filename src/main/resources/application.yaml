@@ -1,4 +1,7 @@
 spring:
+  output:
+    ansi:
+      enabled: ALWAYS
   servlet:
     multipart:
       max-file-size: ${MAX_FILE_SIZE}

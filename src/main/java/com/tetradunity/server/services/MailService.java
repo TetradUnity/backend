@@ -176,7 +176,7 @@ public class MailService {
                 "UTF-8");
         helper.setSubject("application approved");
         helper.setTo(email);
-        String emailContent = getRecoveryPassword(first_name, last_name);
+        String emailContent = getApplicationSubmitted(first_name, last_name);
         helper.setText(emailContent, true);
         mailSender.send(mimeMessage);
     }

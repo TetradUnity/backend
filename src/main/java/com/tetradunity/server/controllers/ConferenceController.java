@@ -5,9 +5,8 @@ import com.tetradunity.server.entities.GradeEntity;
 import com.tetradunity.server.entities.SubjectEntity;
 import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.models.events.ConferenceCreate;
-import com.tetradunity.server.repositories.ConferenceRepository;
-import com.tetradunity.server.repositories.GradeRepository;
-import com.tetradunity.server.repositories.SubjectRepository;
+import com.tetradunity.server.models.grades.ConferenceGrade;
+import com.tetradunity.server.repositories.*;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,11 +23,15 @@ import java.util.regex.Pattern;
 public class ConferenceController {
 
     @Autowired
-    SubjectRepository subjectRepository;
+    private SubjectRepository subjectRepository;
     @Autowired
-    ConferenceRepository conferenceRepository;
+    private ConferenceRepository conferenceRepository;
     @Autowired
-    GradeRepository gradeRepository;
+    private GradeRepository gradeRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private StudentSubjectRepository studentSubjectRepository;
 
     private final Pattern pattern = Pattern.compile("^(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})([/\\w .-]*)*/?(\\?.*)?$\n");
 
@@ -83,12 +86,14 @@ public class ConferenceController {
     }
 
     @PostMapping("rate-conference")
-    public ResponseEntity<Object> rateConference(HttpServletRequest req, @RequestParam double result, @RequestParam long conference_id){
+    public ResponseEntity<Object> rateConference(HttpServletRequest req, @RequestBody ConferenceGrade conferenceGrade){
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if(user == null){
             return ResponseService.unauthorized();
         }
+
+        long conference_id = conferenceGrade.getConference_id();
 
         ConferenceEntity conference = conferenceRepository.findById(conference_id).orElse(null);
 
@@ -119,10 +124,22 @@ public class ConferenceController {
             return ResponseService.failed("no_permission");
         }
 
-        GradeEntity grade = gradeRepository.findByStudentAndParent(user.getId(), conference_id, "conference").orElse(null);
+        long student_id = conferenceGrade.getStudent_id();
+
+        if(studentSubjectRepository.findByStudent_idAndSubject_id(student_id, subject_id).orElse(null) == null){
+            return ResponseService.failed();
+        }
+
+        GradeEntity grade = gradeRepository.findByStudentAndParent(student_id, conference_id, "conference").orElse(null);
+
+        double result = conferenceGrade.getResult();
+
+        if(result < 0 || result > 100){
+            return ResponseService.failed("incorrect_data");
+        }
 
         if(grade == null){
-            gradeRepository.save(new GradeEntity(user.getId(), subject_id, conference_id, 0, result));
+            gradeRepository.save(new GradeEntity(student_id, subject_id, conference_id, 0, result));
         }
         else{
             grade.setValue(result);

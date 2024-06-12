@@ -1,6 +1,6 @@
 package com.tetradunity.server.projections;
 
-public interface ShortInfoSubjectProjection {
+public interface ShortInfoTeacherSubjectProjection {
     long getId();
     String getBanner();
     String getTitle();

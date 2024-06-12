@@ -3,7 +3,7 @@ package com.tetradunity.server.controllers;
 import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.models.users.EditedUser;
 import com.tetradunity.server.models.general.Role;
-import com.tetradunity.server.models.users.ShortInfoUser;
+import com.tetradunity.server.models.users.ShortInfoOptionUser;
 import com.tetradunity.server.models.users.User;
 import com.tetradunity.server.repositories.UserRepository;
 import com.tetradunity.server.services.ResponseService;
@@ -11,7 +11,6 @@ import com.tetradunity.server.services.StorageService;
 import com.tetradunity.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -208,7 +207,7 @@ public class UserController {
         response.put("ok", true);
         response.put("users", users
                 .stream()
-                .map(ShortInfoUser::new)
+                .map(ShortInfoOptionUser::new)
                 .collect(Collectors.toList()));
         return ResponseEntity.ok().body(response);
     }

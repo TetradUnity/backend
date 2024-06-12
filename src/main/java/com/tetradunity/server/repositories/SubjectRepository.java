@@ -3,10 +3,8 @@ package com.tetradunity.server.repositories;
 import com.tetradunity.server.entities.SubjectEntity;
 import com.tetradunity.server.models.subjects.SubjectFilter;
 import com.tetradunity.server.projections.AnnounceSubjectProjection;
-import com.tetradunity.server.projections.ShortInfoSubjectProjection;
-import jakarta.transaction.Transactional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
+import com.tetradunity.server.projections.ShortInfoStudentSubjectProjection;
+import com.tetradunity.server.projections.ShortInfoTeacherSubjectProjection;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
@@ -15,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
+
     Optional<SubjectEntity> findById(long id);
 
     @Query(value = """
@@ -84,7 +83,7 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
                 WHEN s.time_exam_end > UNIX_TIMESTAMP() * 1000 THEN s.time_exam_end
                 WHEN s.is_start AND s.time_start > UNIX_TIMESTAMP() * 1000 THEN s.time_start
                 WHEN s.time_start > UNIX_TIMESTAMP() * 1000 THEN 0
-                ELSE (SELECT COUNT(*) JOIN student_subjects st ON st.subject_id = s.id)
+                ELSE (SELECT COUNT(*) FROM student_subjects st WHERE st.subject_id = s.id)
             END) AS info,
             (CASE
                 WHEN s.time_exam_end > UNIX_TIMESTAMP() * 1000 THEN 0
@@ -93,21 +92,22 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
                 ELSE 3
             END) AS type FROM subjects s WHERE s.teacher_id = :teacher_id
             """, nativeQuery = true)
-    List<ShortInfoSubjectProjection> findTeacherSubjects(long teacher_id);
+    List<ShortInfoTeacherSubjectProjection> findTeacherSubjects(long teacher_id);
 
     @Query(value = """
-            SELECT s.id, s.banner, s.title,
+            SELECT s.id, s.banner, u.first_name, u.last_name, s.title,
             (CASE
                 WHEN s.time_start > UNIX_TIMESTAMP() * 1000 THEN s.time_start
-                ELSE (SELECT COUNT(*) JOIN student_subjects st ON st.subject_id = s.id)
+                ELSE (SELECT COUNT(*) FROM student_subjects st WHERE st.subject_id = s.id)
             END) AS info,
             (CASE
                 WHEN s.time_start > UNIX_TIMESTAMP() * 1000 THEN 2
                 ELSE 3
             END) AS type FROM student_subjects st
             JOIN subjects s ON st.subject_id = s.id
+            JOIN users u ON u.id = s.teacher_id
             WHERE st.student_id = :student_id
-            WHERE s.is_start
+            AND s.is_start
             """, nativeQuery = true)
-    List<ShortInfoSubjectProjection> findStudentSubjects(long student_id);
+    List<ShortInfoStudentSubjectProjection> findStudentSubjects(long student_id);
 }

@@ -1,6 +1,7 @@
 package com.tetradunity.server.controllers;
 
 import com.tetradunity.server.entities.*;
+import com.tetradunity.server.models.events.EducationMaterialCreate;
 import com.tetradunity.server.models.events.InfoEducationMaterial;
 import com.tetradunity.server.models.general.Role;
 import com.tetradunity.server.models.events.ShortInfoHomework;
@@ -43,7 +44,7 @@ public class EducationController {
     private GradeRepository gradeRepository;
 
     @PostMapping("create-education-material")
-    public ResponseEntity<Object> createEducationMaterial(HttpServletRequest req, @RequestBody EducationMaterialEntity educationMaterial) {
+    public ResponseEntity<Object> createEducationMaterial(HttpServletRequest req, @RequestBody EducationMaterialCreate educationMaterial) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {
@@ -98,23 +99,22 @@ public class EducationController {
             return ResponseService.failed();
         }
 
-        educationMaterial = educationMaterialRepository.save(educationMaterial);
+        EducationMaterialEntity educationMaterialEntity = educationMaterialRepository.save(new EducationMaterialEntity(educationMaterial));
 
         if(deadline != 0){
             for(StudentSubjectEntity student : studentSubjectRepository.findBySubject_id(subject_id)){
-                gradeRepository.save(new GradeEntity(student.getStudent_id(), subject_id, educationMaterial.getId(), is_test ? 0 : deadline,
+                gradeRepository.save(new GradeEntity(student.getStudent_id(), subject_id, educationMaterialEntity.getId(), is_test ? 0 : deadline,
                         is_test ? TypeGrade.TEST : TypeGrade.EDUCATION_MATERIAL));
             }
         }
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
-        response.put("education_material", educationMaterial);
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("get-education-materials")
-    public ResponseEntity<Object> getEducationMaterials(HttpServletRequest req, @RequestParam long subject_id) {
+    public ResponseEntity<Object> getEducationMaterials(HttpServletRequest req, @RequestParam long subject_id, @RequestParam int page) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {
@@ -123,18 +123,19 @@ public class EducationController {
 
         SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
-        if (user.getRole() != Role.CHIEF_TEACHER &&
-                user.getId() != subject.getTeacher_id() &&
-                studentSubjectRepository.findByStudent_idAndSubject_id(user.getId(), subject_id).orElse(null) == null) {
-            return ResponseService.failed("no_permission");
-        }
-
         if (subject == null || !subject.educationProcess()) {
             return ResponseService.failed();
         }
 
+        if (user.getId() != subject.getTeacher_id() &&
+                studentSubjectRepository.findByStudent_idAndSubject_id(user.getId(), subject_id).orElse(null) == null) {
+            return ResponseService.failed("no_permission");
+        }
+
+        int pos = (page - 1) * 15;
+
         List<InfoEducationMaterial> educationMaterials = educationMaterialRepository
-                .findBySubjectId(subject_id)
+                .findBySubjectId(subject_id, pos)
                 .stream()
                 .map(InfoEducationMaterial::new)
                 .collect(Collectors.toList());
@@ -326,7 +327,7 @@ public class EducationController {
     }
 
     @PostMapping("send-homework")
-    public ResponseEntity<Object> openEducationMaterial(HttpServletRequest req, @RequestParam long education_id,
+    public ResponseEntity<Object> sendHomework(HttpServletRequest req, @RequestParam long education_id,
                                                         @RequestBody StringModel requestModel) {
         UserEntity user = AuthUtil.authorizedUser(req);
 

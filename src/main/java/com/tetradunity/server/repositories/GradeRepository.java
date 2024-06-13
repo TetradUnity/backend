@@ -45,16 +45,16 @@ public interface GradeRepository extends JpaRepository<GradeEntity, Long> {
             """, nativeQuery = true)
     List<GradeProjection> findBySubject(long student_id, long subject_id, int pos);
 
-    @Query(value = "SELECT g.id, u.first_name, u.last_name, u.avatar, g.value, g.time_edited_end as dispatch_time, g.attempt " +
+    @Query(value = "SELECT g.id, u.first_name, u.last_name, u.avatar, g.value, g.date as dispatch_time, g.attempt " +
             " FROM grades g " +
             "JOIN users u ON g.student_id = u.id " +
             "WHERE :parent_id = g.parent_id", nativeQuery = true)
     List<ShortInfoHomeworkProjection> findByParent(long parent_id);
 
-    @Query(value = "SELECT g.id, u.first_name, u.last_name, u.avatar, g.value, g.time_edited_end as dispatch_time, g.attempt " +
+    @Query(value = "SELECT g.id, u.first_name, u.last_name, u.avatar, g.value, g.date as dispatch_time, g.attempt " +
             " FROM grades g " +
             "JOIN users u ON g.student_id = u.id " +
-            "WHERE :id = g.id", nativeQuery = true)
+            "WHERE :id = g.id AND date <> 0", nativeQuery = true)
     Optional<ShortInfoHomeworkProjection> findShortInfoById(long id);
 
     @Query(value = "SELECT g.id, g.value, g.date, " +

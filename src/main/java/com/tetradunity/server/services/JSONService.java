@@ -239,7 +239,7 @@ public class JSONService {
         return rightAnswers;
     }
 
-    private static final Pattern patternFile = Pattern.compile("^[a-zA-Z0-9-]{1,40}\\.[a-zA-Z0-9]{3,}$");
+    private static final Pattern patternFile = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\\.[a-zA-Z0-9]{2,}$");
 
     public static boolean checkFiles(String json) {
         try {
@@ -247,10 +247,8 @@ public class JSONService {
             for (int i = 0; i < files.length(); i++) {
                 System.out.println("Checking file: " + files.getString(i));
                 if (!patternFile.matcher(files.getString(i)).matches()) {
-                    System.out.println(1);
                     return false;
                 }
-                System.out.println(2);
             }
             return true;
         } catch (RuntimeException ex) {

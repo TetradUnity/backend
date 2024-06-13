@@ -97,7 +97,7 @@ public class SubjectController {
 
             {
                 int title_length = subject.getTitle().length();
-                if (title_length < 2 || title_length > 70){
+                if (title_length < 2 || title_length > 25){
                     return ResponseService.failed();
                 }
             }
@@ -132,7 +132,7 @@ public class SubjectController {
                 if (description_length < 10) {
                     return ResponseService.failed("small_size_short_description");
                 }
-                if (description_length > 200) {
+                if (description_length > 100) {
                     return ResponseService.failed("big_size_short_description");
                 }
             } else {
@@ -162,8 +162,6 @@ public class SubjectController {
                 }
                 tagSubjectRepository.save(new TagSubjectEntity(id, tag));
             }
-
-            System.out.println(subject.getDescription());
 
             Map<String, Object> response = new HashMap<>();
             response.put("ok", true);

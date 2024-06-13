@@ -75,6 +75,7 @@ public class GradeController {
 
         grade.setDate(current_time);
         grade.setValue(result);
+        gradeRepository.save(grade);
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);

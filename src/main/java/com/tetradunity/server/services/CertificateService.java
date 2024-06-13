@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.List;
 
@@ -36,15 +37,30 @@ public class CertificateService {
     @Autowired
     private StorageService storageService;
 
-    private final static File certificateTemplate = new File("C:\\Users\\maksi\\IdeaProjects\\backend\\src\\main\\resources\\templates\\certificateTemplate.jpg");
-    private final static File fontItalicFile =  new File("C:\\Users\\maksi\\IdeaProjects\\backend\\src\\main\\resources\\templates\\NotoSansItalic.ttf");
-    private final static File fontRobotoFile = new File("C:\\Users\\maksi\\IdeaProjects\\backend\\src\\main\\resources\\templates\\Roboto-Black.ttf");
-    private final static File certificateFile = new File("C:\\Users\\maksi\\IdeaProjects\\backend\\src\\main\\resources\\templates\\certificate.pdf");
+    private final static double pageWidth = PDRectangle.A4.getHeight();
+
+    private final File certificateTemplate;
+    private final File fontItalicFile;
+    private final File fontNameFile;
+    private final File fontTextFile;
+    private final File certificateFile;
+
+    {
+        try {
+            certificateTemplate = new File(getClass().getClassLoader().getResource("templates\\CertificateTemplate.jpg").toURI());
+            fontItalicFile = new File(getClass().getClassLoader().getResource("templates\\NotoSansItalic.ttf").toURI());
+            fontNameFile = new File(getClass().getClassLoader().getResource("templates\\MTCORSVA.TTF").toURI());
+            fontTextFile = new File(getClass().getClassLoader().getResource("templates\\CENTURY.TTF").toURI());
+            certificateFile = new File(getClass().getClassLoader().getResource("templates\\certificate.pdf").toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public synchronized void presentCertificates(long subject_id) throws IOException {
         SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
-        if(!subject.educationProcess()){
+        if (!subject.educationProcess()) {
             return;
         }
 
@@ -62,66 +78,54 @@ public class CertificateService {
         PDPageContentStream contentStream;
         PDImageXObject image;
         Calendar currentTime = new GregorianCalendar();
-        UserEntity user;
-        for(long student_id : students_id){
+        UserEntity student;
+        for (long student_id : students_id) {
             grades = gradeRepository.getGradesForStudentAndSubject(student_id, subject_id);
             result = 0D;
-            for(double grade : grades){
+            for (double grade : grades) {
                 result += grade;
             }
-            try{
+            try {
                 result /= grades.size();
-            }catch(ArithmeticException ae){
+            } catch (ArithmeticException ae) {
                 continue;
             }
-            user = userRepository.findById(student_id).orElse(null);
-            if(user == null){
+            student = userRepository.findById(student_id).orElse(null);
+            if (student == null) {
                 continue;
             }
             certificate = new CertificateEntity(student_id, subject_id, result);
             document = new PDDocument();
-            System.out.println(PDRectangle.A4.getHeight());
-            System.out.println(PDRectangle.A4.getWidth());
             page = new PDPage(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()));
             document.addPage(page);
             contentStream = new PDPageContentStream(document, page);
             image = PDImageXObject.createFromFileByContent(certificateTemplate, document);
-            contentStream.drawImage(image, 21, 58, 800, 480);
-            contentStream.setFont(PDType0Font.load(document, fontRobotoFile), 30);
-            contentStream.setNonStrokingColor(Color.BLACK);
+            contentStream.drawImage(image, 21, 18, 800, 560);
+            contentStream.setNonStrokingColor(Color.WHITE);
+            PDType0Font font = PDType0Font.load(document, fontNameFile);
+            textToCenter(contentStream, student.getFirst_name() + " " + student.getLast_name(), font, 50, 370);
+            font = PDType0Font.load(document, fontTextFile);
+            textToCenter(contentStream, "Сертифікат за " + certificate.getType().getDescription(), font, 40, 310);
+            textToCenter(contentStream, "під час навчання на курсі", font, 40, 270);
+            textToCenter(contentStream, "\"" + subject.getTitle() + "\"", font, 40, 230);
+            font = PDType0Font.load(document, fontItalicFile);
+            contentStream.setFont(font, 15);
             contentStream.beginText();
-            contentStream.newLineAtOffset(120, 350);
-            contentStream.showText("Сертифікат за " + certificate.getType().getDescription());
-            contentStream.endText();
-            contentStream.beginText();
-            contentStream.newLineAtOffset(120, 320);
-            contentStream.showText("під час навчання на курсі");
-            contentStream.endText();
-            contentStream.beginText();
-            contentStream.newLineAtOffset(120, 290);
-            contentStream.showText("\"" + subject.getTitle() + "\"");
-            contentStream.endText();
-            contentStream.beginText();
-            contentStream.newLineAtOffset(120, 260);
-            contentStream.showText(user.getFirst_name() + " " + user.getLast_name());
-            contentStream.endText();
-            contentStream.setFont(PDType0Font.load(document, fontItalicFile), 15);
-            contentStream.beginText();
-            contentStream.newLineAtOffset(710, 75);
-            contentStream.showText(currentTime.get(Calendar.DAY_OF_MONTH) + "." + currentTime.get(Calendar.MONTH) + "." + currentTime.get(Calendar.YEAR));
+            String text_date = currentTime.get(Calendar.DAY_OF_MONTH) + "." + currentTime.get(Calendar.MONTH) + "." + currentTime.get(Calendar.YEAR);
+            contentStream.newLineAtOffset(310 - (font.getStringWidth(text_date) / 1000 * 15) / 2, 120);
+            contentStream.showText(text_date);
             contentStream.endText();
             UUID uid = UUID.randomUUID();
-            while(true){
-                if(certificateRepository.certificateExists(uid)){
+            while (true) {
+                if (certificateRepository.certificateExists(uid)) {
                     uid = UUID.randomUUID();
-                }
-                else{
+                } else {
                     break;
                 }
             }
             certificate.setUid(uid);
             contentStream.beginText();
-            contentStream.newLineAtOffset(550, 30);
+            contentStream.newLineAtOffset(420, 120);
             contentStream.showText(uid.toString());
             contentStream.endText();
             contentStream.close();
@@ -129,5 +133,13 @@ public class CertificateService {
             storageService.uploadCertificate(certificateFile, uid);
             certificateRepository.save(certificate);
         }
+    }
+
+    private void textToCenter(PDPageContentStream contentStream, String text, PDType0Font font, int size_font, int y) throws IOException {
+        contentStream.setFont(font, size_font);
+        contentStream.beginText();
+        contentStream.newLineAtOffset((float)(pageWidth - font.getStringWidth(text) / 1000 * size_font) / 2, y);
+        contentStream.showText(text);
+        contentStream.endText();
     }
 }

@@ -23,13 +23,18 @@ public interface EducationMaterialRepository extends JpaRepository<EducationMate
     @Query(value = "select * from education_materials where :subject_id = subject_id", nativeQuery = true)
     List<EducationMaterialEntity> findEntitiesBySubjectId(long subject_id);
 
-    @Query(value = "SELECT id, title, ( " +
-            "CASE " +
-            "    WHEN is_test THEN 'test' " +
-            "    ELSE 'education_material' " +
-            "END) as type FROM education_materials " +
-            "WHERE subject_id IN :subject_id " +
-            "AND (deadline > :from AND deadline < :till)", nativeQuery = true)
+    @Query(value = """
+            SELECT id, title, time_created as date, (
+            CASE
+                WHEN is_test THEN 'test'
+                ELSE 'education_material'
+            END) as type FROM education_materials
+            WHERE subject_id IN :subject_id
+            AND (time_created > :from AND time_created < :till)
+            UNION
+            SELECT id, title, date, 'conference' as type FROM conferences
+            WHERE subject_id IN :subject_id
+            AND (date > :from AND date < :till)""", nativeQuery = true)
     List<EventProjection> findForMonth(long[] subject_id, long from, long till);
 
     @Modifying

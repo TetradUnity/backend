@@ -30,7 +30,7 @@ public class UserController {
     @Autowired
     StorageService storageService;
 
-    private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
+    private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
     @GetMapping("/check-authorized")
     public ResponseEntity<Object> checkAuthorized(HttpServletRequest req){
@@ -129,7 +129,7 @@ public class UserController {
 
         if (password != null) {
             if (passwordEncoder.matches(oldPassword, user.getPassword())) {
-                user.setPassword(password);
+                user.setPassword(passwordEncoder.encode(password));
             } else {
                 return ResponseService.failed("incorrect_password");
             }
@@ -147,11 +147,9 @@ public class UserController {
             user.setLast_name(last_name);
         }
 
-        if (avatar != null || avatar.trim().isEmpty()) {
-            if (storageService.downloadFile("avatars/" + avatar) != null) {
-                storageService.deleteFile("avatars/" + user.getAvatar());
-                user.setAvatar(avatar);
-            }
+        if (avatar != null && !avatar.trim().isEmpty()) {
+            storageService.deleteFile("avatars/" + user.getAvatar());
+            user.setAvatar(avatar);
         }
 
         userRepository.save(user);
@@ -161,23 +159,41 @@ public class UserController {
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping("get_options")
-    public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestParam String email, @RequestParam Role role) {
+    @GetMapping("find-users")
+    public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestParam(required = false) String email,
+                                             @RequestParam(required = false) String first_name, @RequestParam(required = false) String last_name,
+                                             @RequestParam Role role,
+                                             @RequestParam int limit, @RequestParam int page) {
         UserEntity me = AuthUtil.authorizedUser(req);
 
         if (me == null) {
             return ResponseService.unauthorized();
         }
 
-        if (me.getRole() != Role.CHIEF_TEACHER) {
-            return ResponseService.failed("no_permission");
+
+        int pos = (page - 1) * limit;
+
+        List<UserEntity> users;
+
+        if(email == null){
+            if(first_name == null || last_name == null){
+                return ResponseService.failed("incorrect_data");
+            }
+            users = userRepository.findByNameAndRole(first_name, last_name, role.name(), limit, pos);
+        }
+        else{
+            if(email.length() < 2) {
+                return ResponseService.failed("very_short");
+            }
+
+            if (me.getRole() != Role.CHIEF_TEACHER) {
+                return ResponseService.failed("no_permission");
+            }
+
+            users = userRepository.findByEmailPrefixAndRole(email, role.name(), limit, pos);
         }
 
-        if (email.length() < 2) {
-            return ResponseService.failed("very_short");
-        }
 
-        List<UserEntity> users = userRepository.findByEmailPrefixAndRole(email, role.name());
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);

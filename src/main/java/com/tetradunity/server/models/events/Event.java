@@ -13,12 +13,13 @@ import lombok.Setter;
 public class Event {
     private long id;
     private String title;
+    private long date;
     private String type;
 
     public Event(EventProjection projection) {
         this(
                 projection.getId(), projection.getTitle(),
-                projection.getType()
+                projection.getDate(), projection.getType()
         );
     }
 }

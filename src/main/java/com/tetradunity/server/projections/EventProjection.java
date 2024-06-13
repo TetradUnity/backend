@@ -5,5 +5,7 @@ public interface EventProjection {
 
     String getTitle();
 
+    long getDate();
+
     String getType();
 }

@@ -11,8 +11,17 @@ import java.util.Optional;
 
 public interface UserRepository extends CrudRepository<UserEntity, Long> {
 	Optional<UserEntity> findByEmail(String email);
-	@Query(value = "SELECT * FROM users WHERE email LIKE :emailPrefix% AND role = :role LIMIT 3", nativeQuery = true)
-	List<UserEntity> findByEmailPrefixAndRole(@Param("emailPrefix") String emailPrefix, @Param("role") String role);
+	@Query(value = "SELECT * FROM users WHERE email LIKE :emailPrefix% AND role = :role LIMIT :limit OFFSET :pos", nativeQuery = true)
+	List<UserEntity> findByEmailPrefixAndRole(String emailPrefix, String role, int limit, int pos);
+
+	@Query(value = """
+			SELECT * FROM users
+			WHERE (:first_namePrefix = '' OR first_name LIKE :first_namePrefix)
+			AND (:last_namePrefix = '' OR last_name LIKE :last_namePrefix)
+			AND role = :role
+			ORDER BY last_name, first_name
+			LIMIT :limit OFFSET :pos""", nativeQuery = true)
+	List<UserEntity> findByNameAndRole(String first_namePrefix, String last_namePrefix, String role, int limit, int pos);
 	@Query(value = "SELECT COUNT(*) FROM users WHERE role = 'CHIEF_TEACHER'", nativeQuery = true)
 	Long countChiefTeachers();
 

@@ -110,4 +110,14 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Long> {
             AND s.is_start
             """, nativeQuery = true)
     List<ShortInfoStudentSubjectProjection> findStudentSubjects(long student_id);
+
+    @Query(value = """
+            SELECT COUNT(*) FROM subjects
+            WHERE id = :subject_id AND teacher_id = :teacher_id
+            """, nativeQuery = true)
+    long countByTeacherAndSubject(long teacher_id, long subject_id);
+
+    default boolean existsSubjectByTeacherAndSubject(long teacher_id, long subject_id){
+        return countByTeacherAndSubject(teacher_id, subject_id) == 1;
+    }
 }

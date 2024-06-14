@@ -170,10 +170,11 @@ public class UserController {
             return ResponseService.unauthorized();
         }
 
-
         int pos = (page - 1) * limit;
 
         List<UserEntity> users;
+
+        Map<String, Object> response = new HashMap<>();
 
         if(email == null){
             if(first_name == null || last_name == null){
@@ -195,7 +196,6 @@ public class UserController {
 
 
 
-        Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
         response.put("users", users
                 .stream()

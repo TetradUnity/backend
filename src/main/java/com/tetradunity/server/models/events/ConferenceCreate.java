@@ -12,6 +12,5 @@ import lombok.Setter;
 public class ConferenceCreate {
     private long subject_id;
     private long date;
-    private String title;
     private String link;
 }

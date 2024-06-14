@@ -18,17 +18,14 @@ public class ConferenceEntity {
     private long subject_id;
     private long date;
     private String link;
-    private String title;
 
     public ConferenceEntity(ConferenceCreate info){
-        this(info.getSubject_id(), info.getDate(),
-                info.getLink(), info.getTitle());
+        this(info.getSubject_id(), info.getDate(), info.getLink());
     }
 
-    public ConferenceEntity(long subject_id, long date, String link, String title){
+    public ConferenceEntity(long subject_id, long date, String link){
         this.subject_id = subject_id;
         this.date = date;
         this.link = link;
-        this.title = title;
     }
 }

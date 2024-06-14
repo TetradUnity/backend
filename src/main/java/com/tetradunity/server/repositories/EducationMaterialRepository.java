@@ -32,7 +32,7 @@ public interface EducationMaterialRepository extends JpaRepository<EducationMate
             WHERE subject_id IN :subject_id
             AND (time_created > :from AND time_created < :till)
             UNION
-            SELECT id, title, date, 'conference' as type FROM conferences
+            SELECT id, link as title, date, 'conference' as type FROM conferences
             WHERE subject_id IN :subject_id
             AND (date > :from AND date < :till)""", nativeQuery = true)
     List<EventProjection> findForMonth(long[] subject_id, long from, long till);

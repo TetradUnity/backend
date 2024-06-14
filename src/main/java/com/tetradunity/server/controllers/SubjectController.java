@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -441,11 +442,8 @@ public class SubjectController {
             return ResponseService.failed("late");
         }
 
-        long end_time = current_time + duration;
-
-        if(end_time > exam_end){
-            end_time = exam_end;
-        }
+        long end_time = duration == -1 ? exam_end : current_time + duration;
+        end_time = Math.min(end_time, exam_end);
 
         resultExam.setTime_end(end_time);
         resultExam.setTime_start(current_time);
@@ -793,7 +791,8 @@ public class SubjectController {
         return ResponseEntity.ok().body(response);
     }
 
-    @PostMapping("finish-subject")
+    @Transactional
+    @DeleteMapping("finish-subject")
     public ResponseEntity<Object> finishSubject(HttpServletRequest req, @RequestParam(required = true) long subject_id) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
@@ -804,7 +803,7 @@ public class SubjectController {
         SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
         if (subject == null) {
-            return ResponseService.failed();
+            return ResponseService.notFound();
         }
 
         if (subject.getTeacher_id() != user.getId()) {
@@ -815,11 +814,23 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        NoRatedTaskProjection noRatedTask = gradeRepository.findNoRateTask(subject_id).orElse(null);
+        System.out.println("HELLO BEAR!");
+
+        NoRatedTaskProjection noRatedTask = educationMaterialRepository.findNoEndedTask(subject_id).orElse(null);
 
         if(noRatedTask != null){
             Map<String, Object> response = new HashMap<>();
-            response.put("ok", true);
+            response.put("ok", false);
+            response.put("no_ended_task_id", noRatedTask.getId());
+            response.put("no_ended_task_title", noRatedTask.getTitle());
+            return ResponseEntity.ok().body(response);
+        }
+
+        noRatedTask = gradeRepository.findNoRateTask(subject_id).orElse(null);
+
+        if(noRatedTask != null){
+            Map<String, Object> response = new HashMap<>();
+            response.put("ok", false);
             response.put("no_rate_task_id", noRatedTask.getId());
             response.put("no_rate_task_title", noRatedTask.getTitle());
             return ResponseEntity.ok().body(response);

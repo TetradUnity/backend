@@ -6,6 +6,7 @@ import com.tetradunity.server.entities.SubjectEntity;
 import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.models.events.ConferenceCreate;
 import com.tetradunity.server.models.grades.ConferenceGrade;
+import com.tetradunity.server.models.grades.TypeGrade;
 import com.tetradunity.server.repositories.*;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.utils.AuthUtil;
@@ -33,7 +34,7 @@ public class ConferenceController {
     @Autowired
     private StudentSubjectRepository studentSubjectRepository;
 
-    private final Pattern pattern = Pattern.compile("^.+&");
+    private final Pattern pattern = Pattern.compile("^(https?|ftp)://[\\w.-]+(?:\\.[\\w\\\\.-]+)+[/\\w\\-._~:/?#[\\\\]@!$&'()*+,;=.]*$");
 
     @PostMapping("create")
     public ResponseEntity<Object> create(HttpServletRequest req, @RequestBody ConferenceCreate info){
@@ -68,9 +69,9 @@ public class ConferenceController {
             return ResponseService.failed();
         }
 
-//        if(!pattern.matcher(link).matches()){
-//            return ResponseService.failed("incorrect_link");
-//        }
+        if(!pattern.matcher(link).matches()){
+            return ResponseService.failed("incorrect_link");
+        }
 
         ConferenceEntity conference = conferenceRepository.save(new ConferenceEntity(info));
 
@@ -125,7 +126,7 @@ public class ConferenceController {
             return ResponseService.failed();
         }
 
-        GradeEntity grade = gradeRepository.findByStudentAndParent(student_id, conference_id, "conference").orElse(null);
+        GradeEntity grade = gradeRepository.findByStudentAndParent(student_id, conference_id, TypeGrade.CONFERENCE.name()).orElse(null);
 
         double result = conferenceGrade.getResult();
 
@@ -137,6 +138,7 @@ public class ConferenceController {
             gradeRepository.save(new GradeEntity(student_id, subject_id, conference_id, 0, result));
         }
         else{
+            System.out.println(grade);
             grade.setValue(result);
             grade.setDate(current_time);
             gradeRepository.save(grade);

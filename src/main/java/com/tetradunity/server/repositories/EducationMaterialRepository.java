@@ -4,6 +4,7 @@ import com.amazonaws.services.iot.model.ConfirmTopicRuleDestinationRequest;
 import com.tetradunity.server.entities.EducationMaterialEntity;
 import com.tetradunity.server.projections.EventProjection;
 import com.tetradunity.server.projections.InfoEducationMaterialProjection;
+import com.tetradunity.server.projections.NoRatedTaskProjection;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface EducationMaterialRepository extends JpaRepository<EducationMaterialEntity, Long> {
     @Query(value = """
@@ -36,6 +38,13 @@ public interface EducationMaterialRepository extends JpaRepository<EducationMate
             WHERE subject_id IN :subject_id
             AND (date > :from AND date < :till)""", nativeQuery = true)
     List<EventProjection> findForMonth(long[] subject_id, long from, long till);
+
+    @Query(value = """
+            SELECT id, title FROM education_materials
+            WHERE subject_id = :subject_id AND deadline > UNIX_TIMESTAMP() * 1000
+            LIMIT 1
+            """, nativeQuery = true)
+    Optional<NoRatedTaskProjection> findNoEndedTask(long subject_id);
 
     @Modifying
     @Transactional

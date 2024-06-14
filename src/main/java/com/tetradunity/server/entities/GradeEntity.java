@@ -47,7 +47,7 @@ public class GradeEntity {
         this.parent_id = parent_id;
         this.time_edited_end = time_edited_end;
         this.value = value;
-        this.type = TypeGrade.CONFERENCES;
+        this.type = TypeGrade.CONFERENCE;
         this.date = System.currentTimeMillis();
     }
 

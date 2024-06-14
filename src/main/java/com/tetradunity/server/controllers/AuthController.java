@@ -170,7 +170,8 @@ public class AuthController {
             if (!pattern.matcher(password).matches()) {
                 return ResponseService.failed("incorrect_password");
             }
-            user.setPassword(password);
+
+            user.setPassword(passwordEncoder.encode(password));
             userRepository.save(user);
         }
 

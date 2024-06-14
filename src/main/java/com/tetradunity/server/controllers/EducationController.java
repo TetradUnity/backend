@@ -218,6 +218,7 @@ public class EducationController {
                 response.put("available_attempt", JSONService.getCount_attempts(content));
                 response.put("amount_questions", JSONService.getAmountQuestion(content));
                 response.put("duration", JSONService.getTime(content));
+                response.put("is_test_going", grade.getTime_edited_end() > current_time);
                 response.put("grade", grade.getValue());
             } else {
                 response.put("content", content);
@@ -256,6 +257,7 @@ public class EducationController {
             return ResponseService.notFound();
         }
 
+
         GradeEntity grade = gradeRepository.findByStudentAndParent(user.getId(), education_id, "education_material").orElse(null);
 
         if (grade == null) {
@@ -268,7 +270,7 @@ public class EducationController {
 
         Map<String, Object> response = new HashMap<>();
 
-        if (deadline < current_time + 600_000) {
+        if (deadline < current_time) {
             response.put("ok", true);
             if (JSONService.isViewing_correct_answers(content)) {
                 response.put("test", JSONService.getQuestionsWithYourAnswersRight(content, grade.getContent()));
@@ -283,28 +285,29 @@ public class EducationController {
         int attempt = grade.getAttempt();
 
         if (current_time > grade.getTime_edited_end()) {
-            if (attempt >= JSONService.getCount_attempts(content)) {
+            if (attempt < JSONService.getCount_attempts(content)) {
+                long time_end = duration == -1 ? deadline : current_time + duration;
+                time_end = Math.min(deadline, time_end);
+                grade.setTime_edited_end(time_end);
+                grade.setDate(time_end);
+                grade.setContent("");
+                grade.incrementAttempt();
+                gradeRepository.save(grade);
+                response.put("end_time", time_end);
+                response.put("ok", true);
+                response.put("test", JSONService.getQuestions(content, false));
+                return ResponseEntity.ok().body(response);
+            }
+            else{
                 response.put("ok", true);
                 response.put("test", JSONService.getQuestionsWithYourAnswers(content, grade.getContent()));
                 return ResponseEntity.ok().body(response);
             }
-            long time_end = current_time + duration;
-            if(time_end > deadline){
-                time_end = deadline;
-            }
-            grade.setTime_edited_end(time_end);
-            grade.setDate(time_end);
-            grade.setContent("");
-            gradeRepository.save(grade);
-            response.put("end_time", time_end);
-            response.put("ok", true);
-            response.put("test", JSONService.getQuestions(content, false));
-            return ResponseEntity.ok().body(response);
         }
-        response.put("end_time", grade.getTime_edited_end());
         response.put("ok", true);
         response.put("test", JSONService.getQuestions(content, false));
         response.put("saved_answer", grade.getContent());
+        response.put("end_time", grade.getTime_edited_end());
         return ResponseEntity.ok().body(response);
     }
 
@@ -415,7 +418,6 @@ public class EducationController {
             grade.setValue(result);
             grade.setTime_edited_end(current_time);
             grade.setDate(current_time);
-            grade.incrementAttempt();
             gradeRepository.save(grade);
             response.put("result", result);
         } else {

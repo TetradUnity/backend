@@ -13,14 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface GradeRepository extends JpaRepository<GradeEntity, Long> {
-    @Query(value = "SELECT * FROM grades g " +
-            "WHERE :student_id = student_id " +
-            "AND :parent_id = parent_id " +
-            "AND CASE " +
-            "    WHEN :parent_type = 'conference' " +
-            "    THEN (SELECT COUNT(*) = 1 FROM conferences c WHERE c.id = :parent_id) " +
-            "    ELSE (SELECT COUNT(*) = 1 FROM education_materials e WHERE e.id = :parent_id) " +
-            "END", nativeQuery = true)
+    @Query(value = """
+            SELECT * FROM grades
+            WHERE :student_id = student_id
+            AND :parent_id = parent_id
+            AND type = :parent_type""", nativeQuery = true)
     Optional<GradeEntity> findByStudentAndParent(long student_id, long parent_id, String parent_type);
 
     @Query(value = """
@@ -57,17 +54,18 @@ public interface GradeRepository extends JpaRepository<GradeEntity, Long> {
             "WHERE :id = g.id AND date <> 0", nativeQuery = true)
     Optional<ShortInfoHomeworkProjection> findShortInfoById(long id);
 
-    @Query(value = "SELECT g.id, g.value, g.date, " +
-            "(CASE " +
-            "   WHEN (SELECT COUNT(*) = 1 FROM conferences c WHERE c.id = g.parent_id) " +
-            "   THEN 'conference' " +
-            "   WHEN (SELECT COUNT(*) = 1 FROM education_materials e WHERE e.id = g.parent_id AND e.is_test) " +
-            "   THEN 'test' " +
-            "   ELSE 'education_material' END " +
-            ") as reason FROM grades g " +
-            "WHERE (g.date > :from AND g.date < :till) " +
-            "AND (g.subject_id IN :subject_id) " +
-            "AND (g.student_id = :student_id)", nativeQuery = true)
+    @Query(value = """
+            SELECT g.id, g.value, g.date,
+            (CASE
+               WHEN (SELECT COUNT(*) = 1 FROM conferences c WHERE c.id = g.parent_id)
+               THEN 'conference'
+               WHEN (SELECT COUNT(*) = 1 FROM education_materials e WHERE e.id = g.parent_id AND e.is_test)
+               THEN 'test'
+               ELSE 'education_material' END
+            ) as reason FROM grades g
+            WHERE (g.date > :from AND g.date < :till)
+            AND (g.subject_id IN :subject_id)
+            AND (g.student_id = :student_id)""", nativeQuery = true)
     List<GradeProjection> findForMonth(long student_id, long[] subject_id, long from, long till);
 
     @Query(value = """
@@ -82,7 +80,7 @@ public interface GradeRepository extends JpaRepository<GradeEntity, Long> {
     void delete(long subject_id);
 
     @Query(value = """
-            SELECT e.id, e.title FROM Grade g
+            SELECT e.id, e.title FROM grades g
             JOIN education_materials e ON e.id = g.parent_id
             WHERE g.subject_id = :subject_id AND g.value = -1
             LIMIT 1

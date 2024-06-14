@@ -336,7 +336,7 @@ public class JSONService {
             switch (key) {
                 case "time":
                     val = GeneralInfo.getInt(key);
-                    if (val <= 0 || val >= 18_000_000) {
+                    if (val <= 10_000 || val >= 18_000_000) {
                         GeneralInfo.put(key, -1);
                     }
                     break;
@@ -427,7 +427,9 @@ public class JSONService {
                         }
                         for (Iterator<String> it = GeneralInfo.keys(); it.hasNext(); ) {
                             String key = it.next();
-
+                            if(!key.equals("content")){
+                                answer.remove(key);
+                            }
                         }
                     }
                     break;

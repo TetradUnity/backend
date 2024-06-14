@@ -59,7 +59,8 @@ public class StorageController {
 
     @GetMapping("/download")
     public ResponseEntity<Object> downloadFile(@RequestParam("path") String path) {
-        return ResponseEntity.ok().contentType(MediaType.valueOf(storageService.determineFileType(path))).body(storageService.downloadFile(path));
+        return ResponseEntity.ok().contentType(MediaType.valueOf(storageService.determineFileType(path)))
+                .body(storageService.downloadFile(path));
     }
 
     private boolean between(double num, double from, double till){

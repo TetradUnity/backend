@@ -33,7 +33,7 @@ public class ConferenceController {
     @Autowired
     private StudentSubjectRepository studentSubjectRepository;
 
-    private final Pattern pattern = Pattern.compile("^(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})([/\\w .-]*)*/?(\\?.*)?$\n");
+    private final Pattern pattern = Pattern.compile("^.+&");
 
     @PostMapping("create")
     public ResponseEntity<Object> create(HttpServletRequest req, @RequestBody ConferenceCreate info){
@@ -63,19 +63,14 @@ public class ConferenceController {
             return ResponseService.failed("incorrect_time");
         }
 
-        String title = info.getTitle();
-        if(title == null || title.trim().isEmpty()){
-            return ResponseService.failed();
-        }
-
         String link = info.getLink();
         if(link == null){
             return ResponseService.failed();
         }
 
-        if(!pattern.matcher(link).matches()){
-            return ResponseService.failed("incorrect_link");
-        }
+//        if(!pattern.matcher(link).matches()){
+//            return ResponseService.failed("incorrect_link");
+//        }
 
         ConferenceEntity conference = conferenceRepository.save(new ConferenceEntity(info));
 

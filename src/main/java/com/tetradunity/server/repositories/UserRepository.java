@@ -25,6 +25,15 @@ public interface UserRepository extends CrudRepository<UserEntity, Long> {
 	@Query(value = "SELECT COUNT(*) FROM users WHERE role = 'CHIEF_TEACHER'", nativeQuery = true)
 	Long countChiefTeachers();
 
+	@Query(value = """
+			SELECT COUNT(*) FROM users
+			WHERE (:first_namePrefix = '' OR first_name LIKE :first_namePrefix)
+			AND (:last_namePrefix = '' OR last_name LIKE :last_namePrefix)
+			AND role = :role
+			ORDER BY last_name, first_name
+			""", nativeQuery = true)
+	Long countByNameAndRole(String first_namePrefix, String last_namePrefix, String role);
+
 	default boolean existsChiefTeacher() {
 		Long count = countChiefTeachers();
 		return count > 0;

@@ -95,7 +95,7 @@ public class MailService {
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
                 false,
                 "UTF-8");
-        helper.setSubject("Complete exam!");
+        helper.setSubject("Exam fail");
         helper.setTo(email);
         String emailContent = getExamFail(first_name, last_name, subject_title);
         helper.setText(emailContent, true);
@@ -122,7 +122,7 @@ public class MailService {
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
                 false,
                 "UTF-8");
-        helper.setSubject("Complete exam!");
+        helper.setSubject("Authorization");
         helper.setTo(email);
         String emailContent = getAuth(first_name, last_name, subject_title, password);
         helper.setText(emailContent, true);
@@ -174,7 +174,7 @@ public class MailService {
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
                 false,
                 "UTF-8");
-        helper.setSubject("application approved");
+        helper.setSubject("application submitted");
         helper.setTo(email);
         String emailContent = getApplicationSubmitted(first_name, last_name);
         helper.setText(emailContent, true);
@@ -224,7 +224,7 @@ public class MailService {
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
                 false,
                 "UTF-8");
-        helper.setSubject("start subject");
+        helper.setSubject("canceled subject");
         helper.setTo(email);
         String emailContent = getSubjectCanceled(first_name, subject_title);
         helper.setText(emailContent, true);

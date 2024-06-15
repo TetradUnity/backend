@@ -28,32 +28,56 @@ public class CheckValidService {
     }
 
     public String checkUser(String email, String first_name, String last_name) {
-        Pattern pattern = Pattern.compile("^[a-zA-Z][a-zA-Z0-9._%+-]{4,}@[a-zA-Z][a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-        if (!pattern.matcher(email).matches()) {
-            return "incorrect_mail_format";
+        String result;
+
+        if(!(result = checkEmail(email, false)).equals("ok")){
+            return result;
         }
 
-        pattern = Pattern.compile("^[A-Z][a-z]{1,}$");
-        if (!pattern.matcher(first_name).matches() || !pattern.matcher(last_name).matches()) {
-            pattern = Pattern.compile("^[А-ЯІЇЄҐ][а-яіїєґ]{1,}$");
-            if (!pattern.matcher(first_name).matches() || !pattern.matcher(last_name).matches()) {
-                return "incorrect_name";
-            }
+        if(!(result = checkName(first_name, last_name)).equals("ok")){
+            return result;
         }
+
         return "ok";
     }
 
     public String checkUser(String email, String password, String first_name, String last_name,
                                    boolean checkExists) {
-        if (email == null || password == null || first_name == null || last_name == null) {
+        String result;
+
+        if(!(result = checkEmail(email, checkExists)).equals("ok")){
+            return result;
+        }
+
+        if(!(result = checkPassword(password)).equals("ok")){
+            return result;
+        }
+
+        if(!(result = checkName(first_name, last_name)).equals("ok")){
+            return result;
+        }
+
+        return "ok";
+    }
+
+    public String checkEmail(String email, boolean checkExists){
+        if(email == null){
             return "incorrect_data";
         }
-        if (checkExists && !userRepository.findByEmail(email).isEmpty()) {
+
+        if (checkExists && userRepository.findByEmail(email).isPresent()) {
             return "user_already_exist";
         }
         Pattern pattern = Pattern.compile("^[a-zA-Z][a-zA-Z0-9._%+-]{4,}@[a-zA-Z][a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
         if (!pattern.matcher(email).matches()) {
             return "incorrect_mail_format";
+        }
+        return "ok";
+    }
+
+    public String checkPassword(String password){
+        if(password == null){
+            return "incorrect_data";
         }
 
         if (password.length() < 6) {
@@ -63,13 +87,21 @@ public class CheckValidService {
             return "password_very_long";
         }
 
-        pattern = Pattern.compile("^[\\S]+$");
+        Pattern pattern = Pattern.compile("^[\\S]+$");
 
         if (!pattern.matcher(password).matches()) {
             return "incorrect_password";
         }
 
-        pattern = Pattern.compile("^[A-Z][a-z]{1,}$");
+        return "ok";
+    }
+
+    public String checkName(String first_name, String last_name){
+        if (first_name == null || last_name == null) {
+            return "incorrect_data";
+        }
+
+        Pattern pattern = Pattern.compile("^[A-Z][a-z]{1,}$");
         if (!pattern.matcher(first_name).matches() || !pattern.matcher(last_name).matches()) {
             pattern = Pattern.compile("^[А-ЯІЇЄҐ][а-яіїєґ']{1,}$");
             if (!pattern.matcher(first_name).matches() || !pattern.matcher(last_name).matches()) {

@@ -2,10 +2,9 @@ package com.tetradunity.server.repositories;
 
 import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.projections.ShortInfoStudentProjection;
-import com.tetradunity.server.projections.StartSubjectRemind;
+import com.tetradunity.server.projections.StartSubjectRemindProjection;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +46,7 @@ public interface UserRepository extends CrudRepository<UserEntity, Long> {
 				WHERE (s.time_start BETWEEN UNIX_TIMESTAMP() * 1000 - 900000 AND UNIX_TIMESTAMP() * 1000)
 				AND s.is_start
 			""", nativeQuery = true)
-	List<StartSubjectRemind> findUserRemind();
+	List<StartSubjectRemindProjection> findUserRemind();
 
 	@Query(value = """
 			SELECT u.*, COALESCE(AVG(g.value), 0) as average_grade FROM users u

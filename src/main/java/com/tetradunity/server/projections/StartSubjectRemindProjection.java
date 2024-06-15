@@ -1,6 +1,6 @@
 package com.tetradunity.server.projections;
 
-public interface StartSubjectRemind {
+public interface StartSubjectRemindProjection {
     String getEmail();
     String getFirst_name();
     String getTitle();

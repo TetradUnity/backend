@@ -10,14 +10,21 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<Object> handlerMultipartException(MultipartException e) {
+        return ResponseService.notFound();
+    }
+
     @ExceptionHandler(SdkClientException.class)
     public ResponseEntity<Object> handlerSdkClientException(SdkClientException e) {
-        return ResponseService.failed("[amazon_error]");
+        System.out.println("[amazon_error]");
+        return ResponseService.notFound();
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

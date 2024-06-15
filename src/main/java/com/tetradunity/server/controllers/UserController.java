@@ -6,6 +6,7 @@ import com.tetradunity.server.models.general.Role;
 import com.tetradunity.server.models.users.ShortInfoOptionUser;
 import com.tetradunity.server.models.users.User;
 import com.tetradunity.server.repositories.UserRepository;
+import com.tetradunity.server.services.CheckValidService;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.services.StorageService;
 import com.tetradunity.server.utils.AuthUtil;
@@ -26,9 +27,11 @@ import java.util.stream.Collectors;
 public class UserController {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    StorageService storageService;
+    private StorageService storageService;
+    @Autowired
+    private CheckValidService checkValidService;
 
     private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -113,7 +116,7 @@ public class UserController {
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {
-            return ResponseService.failed();
+            return ResponseService.unauthorized();
         }
 
         if (editedUser == null) {
@@ -127,27 +130,36 @@ public class UserController {
         String oldPassword = editedUser.getOldPassword();
         String avatar = editedUser.getAvatar();
 
+        String result;
+
         if (password != null) {
             if (passwordEncoder.matches(oldPassword, user.getPassword())) {
-                user.setPassword(passwordEncoder.encode(password));
+                if((result = checkValidService.checkPassword(password)).equals("ok")){
+                    user.setPassword(passwordEncoder.encode(password));
+                }
+                else{
+                    return ResponseService.failed(result);
+                }
             } else {
                 return ResponseService.failed("incorrect_password");
             }
         }
 
-        if (email != null) {
+        if ((result = checkValidService.checkEmail(email, true)).equals("ok")) {
             user.setEmail(email);
         }
-
-        if (first_name != null) {
-            user.setFirst_name(first_name);
+        else{
+            return ResponseService.failed(result);
         }
 
-        if (last_name != null) {
-            user.setLast_name(last_name);
+        first_name = first_name == null ? user.getFirst_name() : first_name;
+        last_name = last_name == null ? user.getLast_name() : last_name;
+
+        if((result = checkValidService.checkName(first_name, last_name)).equals("ok")){
+            return ResponseService.failed(result);
         }
 
-        if (avatar != null && !avatar.trim().isEmpty()) {
+        if (avatar != null && !avatar.isBlank()) {
             storageService.deleteFile("avatars/" + user.getAvatar());
             user.setAvatar(avatar);
         }

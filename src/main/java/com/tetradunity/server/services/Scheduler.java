@@ -1,7 +1,8 @@
 package com.tetradunity.server.services;
 
-import com.amazonaws.auth.SdkClock;
-import com.tetradunity.server.projections.StartSubjectRemind;
+import com.tetradunity.server.projections.ConferenceRemindProjection;
+import com.tetradunity.server.projections.StartSubjectRemindProjection;
+import com.tetradunity.server.repositories.ConferenceRepository;
 import com.tetradunity.server.repositories.PasswordRecoveryRequestRepository;
 import com.tetradunity.server.repositories.RefreshTokenRepository;
 import com.tetradunity.server.repositories.UserRepository;
@@ -10,7 +11,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -25,18 +25,25 @@ public class Scheduler {
     private UserRepository userRepository;
     @Autowired
     private MailService mailService;
+    @Autowired
+    private ConferenceRepository conferenceRepository;
 
     @Scheduled(fixedDelay = 300_000)
     public void deleteExpired(){
         Instant now = Instant.now();
         refreshTokenRepository.deleteByExpiryDateBefore(now);
         passwordRecoveryRequestRepository.deleteByExpiryDateBefore();
+        for(ConferenceRemindProjection projection : conferenceRepository.conferencesRemind()){
+            for(String email : projection.getStudent_emails()){
+
+            }
+        }
     }
 
     @Scheduled(fixedDelay = 600_000)
     public void subjectStart(){
-        List<StartSubjectRemind> users = userRepository.findUserRemind();
-        for(StartSubjectRemind user : users){
+        List<StartSubjectRemindProjection> users = userRepository.findUserRemind();
+        for(StartSubjectRemindProjection user : users){
             mailService.sendStartSubjectRemind(user.getEmail(), user.getFirst_name(), user.getTitle());
         }
     }

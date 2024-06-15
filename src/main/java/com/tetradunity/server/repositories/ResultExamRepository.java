@@ -31,6 +31,13 @@ public interface ResultExamRepository extends JpaRepository<ResultExamEntity, Lo
             AND (:all OR (result > :passing_grade))""", nativeQuery = true)
     List<CandidateProjection> findCandidatesByParent_id(long parent_id, boolean all, int passing_grade);
 
+    @Query(value = """
+            SELECT id, email, first_name, last_name, result, duration FROM results_test
+            WHERE parent_id = :parent_id
+            AND (:all OR (result > :passing_grade))
+            LIMIT 20 OFFSET :pos""", nativeQuery = true)
+    List<CandidateProjection> findCandidatesByParent_id(long parent_id, boolean all, int passing_grade, int pos);
+
     @Query(value = "select * from subject", nativeQuery = true)
 
     default boolean existsByEmailAndSubjectId(String email, long id) {
@@ -42,4 +49,16 @@ public interface ResultExamRepository extends JpaRepository<ResultExamEntity, Lo
     @Transactional
     @Query(value = "DELETE FROM results_test WHERE parent_id = :subject_id", nativeQuery = true)
     void deleteBySubjectId(long subject_id);
+
+    @Query(value = """
+                SELECT AVG(value) FROM result_test
+                WHERE parent_id = :parent_id
+            """, nativeQuery = true)
+    Double findAverageResult(long parent_id);
+
+    @Query(value = """
+                SELECT COUNT(value) FROM result_test
+                WHERE parent_id = :parent_id
+            """, nativeQuery = true)
+    Long findCountCandidate(long parent_id);
 }

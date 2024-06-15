@@ -163,7 +163,8 @@ public class UserController {
     public ResponseEntity<Object> getOptions(HttpServletRequest req, @RequestParam(required = false) String email,
                                              @RequestParam(required = false) String first_name, @RequestParam(required = false) String last_name,
                                              @RequestParam Role role,
-                                             @RequestParam int limit, @RequestParam int page) {
+                                             @RequestParam(required = false, defaultValue = "3") int limit,
+                                             @RequestParam(required = false, defaultValue = "1") int page) {
         UserEntity me = AuthUtil.authorizedUser(req);
 
         if (me == null) {

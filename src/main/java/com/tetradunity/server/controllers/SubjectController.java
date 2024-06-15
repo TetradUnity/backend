@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -52,7 +51,7 @@ public class SubjectController {
     @Autowired
     private CheckValidService checkValidService;
 
-    private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
+    private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
     private static int calculateTextLength(String htmlString) {
         String textWithoutTags = htmlString.replaceAll("<.*?>", "");
@@ -144,7 +143,7 @@ public class SubjectController {
 
             Random rand = new Random();
 
-            if (banner == null) {
+            if (banner == null || storageService.downloadFile("banners/ " + banner) == null) {
                 subject.setBanner("banners/base" + rand.nextInt(1, 5));
             } else {
                 if (storageService.downloadFile("banners/" + banner) != null) {
@@ -240,26 +239,84 @@ public class SubjectController {
         return ResponseService.failed("no_permission");
     }
 
-    @GetMapping("get-students")
-    public ResponseEntity<Object> getAnnounceSubjects(HttpServletRequest req, @RequestParam long subject_id) {
+    @GetMapping("get-all-students")
+    public ResponseEntity<Object> getAllStudents(HttpServletRequest req, @RequestParam long subject_id) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {
             return ResponseService.unauthorized();
         }
 
-        SubjectEntity subjectEntity = subjectRepository.findById(subject_id).orElse(null);
+        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
-        if (subjectEntity == null) {
+        if (subject == null) {
             return ResponseService.failed();
         }
 
-        if (studentSubjectRepository.findByStudent_idAndSubject_id(user.getId(), subject_id).isPresent() ||
-                subjectEntity.getTeacher_id() == user.getId()
-        ) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("ok", true);
-            response.put("students", userRepository.findBySubjectId(subject_id)
+        if(!subject.educationProcess()){
+            return ResponseService.notFound();
+        }
+
+        long user_id = user.getId();
+
+        if (user_id != subject.getTeacher_id() &&
+                studentSubjectRepository.findByStudent_idAndSubject_id(user_id, subject_id).orElse(null) == null) {
+            return ResponseService.failed("no_permission");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+
+        if (subject.getTeacher_id() == user.getId()){
+            response.put("students", userRepository.findStudentBySubjectId(subject_id)
+                    .stream()
+                    .map(ShortInfoStudent::new)
+                    .toList());
+            return ResponseEntity.ok().body(response);
+        }
+
+        return ResponseService.failed("no_permission");
+    }
+
+    @GetMapping("get-students")
+    public ResponseEntity<Object> getStudents(HttpServletRequest req, @RequestParam long subject_id,
+                                                      @RequestParam int page) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        if(!subject.educationProcess()){
+            return ResponseService.notFound();
+        }
+
+        long user_id = user.getId();
+
+        if (user_id != subject.getTeacher_id() &&
+                studentSubjectRepository.findByStudent_idAndSubject_id(user_id, subject_id).orElse(null) == null) {
+            return ResponseService.failed("no_permission");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        response.put("count", userRepository.countStudentInSubject(subject_id));
+
+        if (subject.getTeacher_id() == user.getId()){
+            response.put("students", userRepository.findStudentBySubjectIdForTeacher(subject_id, (page - 1) * 15)
+                    .stream()
+                    .map(ShortInfoStudent::new)
+                    .toList());
+            return ResponseEntity.ok().body(response);
+        }
+        else if(studentSubjectRepository.findByStudent_idAndSubject_id(user.getId(), subject_id).isPresent()){
+            response.put("students", userRepository.findStudentBySubjectIdForStudent(subject_id, (page - 1) * 15)
                     .stream()
                     .map(ShortInfoStudent::new)
                     .toList());
@@ -442,8 +499,11 @@ public class SubjectController {
             return ResponseService.failed("late");
         }
 
-        long end_time = duration == -1 ? exam_end : current_time + duration;
-        end_time = Math.min(end_time, exam_end);
+        long end_time = current_time + duration;
+
+        if(end_time > exam_end){
+            end_time = exam_end;
+        }
 
         resultExam.setTime_end(end_time);
         resultExam.setTime_start(current_time);
@@ -558,7 +618,7 @@ public class SubjectController {
     }
 
     @GetMapping("get-candidates")
-    public ResponseEntity<Object> getCandidates(HttpServletRequest req, @RequestParam(required = true) long subjectId) {
+    public ResponseEntity<Object> getCandidates(HttpServletRequest req, @RequestParam long subjectId, int page) {
 
         UserEntity user = AuthUtil.authorizedUser(req);
 
@@ -587,7 +647,7 @@ public class SubjectController {
         int exam_duration = JSONService.getTime(subject.getExam());
 
         List<Candidate> candidates = resultExamRepository.findCandidatesByParent_id(subjectId, subject.getExam().isEmpty(),
-                        JSONService.getPassing_grade(subject.getExam()))
+                        JSONService.getPassing_grade(subject.getExam()), (page - 1) * 20)
                 .stream()
                 .map(Candidate::new)
                 .peek(candidate -> {
@@ -603,6 +663,8 @@ public class SubjectController {
         response.put("title", subject.getTitle());
         response.put("banner", subject.getBanner());
         response.put("has_exam", !subject.getExam().isEmpty());
+        response.put("average_result", resultExamRepository.findAverageResult(subjectId));
+        response.put("count_candidates", resultExamRepository.findCountCandidate(subjectId));
         return ResponseEntity.ok().body(response);
     }
 
@@ -791,9 +853,8 @@ public class SubjectController {
         return ResponseEntity.ok().body(response);
     }
 
-    @Transactional
-    @DeleteMapping("finish-subject")
-    public ResponseEntity<Object> finishSubject(HttpServletRequest req, @RequestParam(required = true) long subject_id) {
+    @DeleteMapping("remove-student")
+    public ResponseEntity<Object> removeStudent(HttpServletRequest req, @RequestParam long subject_id, long student_id){
         UserEntity user = AuthUtil.authorizedUser(req);
 
         if (user == null) {
@@ -803,7 +864,7 @@ public class SubjectController {
         SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
         if (subject == null) {
-            return ResponseService.notFound();
+            return ResponseService.failed();
         }
 
         if (subject.getTeacher_id() != user.getId()) {
@@ -814,7 +875,51 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        System.out.println("HELLO BEAR!");
+        StudentSubjectEntity studentSubject;
+
+        if((studentSubject = studentSubjectRepository.findByStudent_idAndSubject_id(student_id, subject_id).orElse(null)) == null){
+            return ResponseService.notFound();
+        }
+
+        studentSubjectRepository.delete(studentSubject);
+
+        String content;
+
+        for(GradeEntity grade : gradeRepository.findByStudentAndSubject(student_id, subject_id)){
+            if(JSONService.checkFiles(content = grade.getContent())){
+                for(String file : JSONService.getFiles(content)){
+                    storageService.deleteFile("homework/" + file);
+                }
+                gradeRepository.delete(grade);
+            }
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ok", true);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @DeleteMapping("finish-subject")
+    public ResponseEntity<Object> finishSubject(HttpServletRequest req, @RequestParam long subject_id) {
+        UserEntity user = AuthUtil.authorizedUser(req);
+
+        if (user == null) {
+            return ResponseService.unauthorized();
+        }
+
+        SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
+
+        if (subject == null) {
+            return ResponseService.failed();
+        }
+
+        if (subject.getTeacher_id() != user.getId()) {
+            return ResponseService.failed("no_permission");
+        }
+
+        if(!subject.educationProcess()){
+            return ResponseService.failed();
+        }
 
         NoRatedTaskProjection noRatedTask = educationMaterialRepository.findNoEndedTask(subject_id).orElse(null);
 
@@ -823,7 +928,7 @@ public class SubjectController {
             response.put("ok", false);
             response.put("no_ended_task_id", noRatedTask.getId());
             response.put("no_ended_task_title", noRatedTask.getTitle());
-            return ResponseEntity.ok().body(response);
+            return ResponseEntity.badRequest().body(response);
         }
 
         noRatedTask = gradeRepository.findNoRateTask(subject_id).orElse(null);
@@ -833,7 +938,7 @@ public class SubjectController {
             response.put("ok", false);
             response.put("no_rate_task_id", noRatedTask.getId());
             response.put("no_rate_task_title", noRatedTask.getTitle());
-            return ResponseEntity.ok().body(response);
+            return ResponseEntity.badRequest().body(response);
         }
 
         try{

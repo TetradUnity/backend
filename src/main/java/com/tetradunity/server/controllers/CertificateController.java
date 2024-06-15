@@ -4,6 +4,7 @@ import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.models.certificates.Certificate;
 import com.tetradunity.server.models.general.Role;
 import com.tetradunity.server.repositories.CertificateRepository;
+import com.tetradunity.server.repositories.UserRepository;
 import com.tetradunity.server.services.ResponseService;
 import com.tetradunity.server.utils.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,10 +24,12 @@ import java.util.UUID;
 public class CertificateController {
     @Autowired
     private CertificateRepository certificateRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping("get-certificates")
-    public ResponseEntity<Object> getCertificates(HttpServletRequest req){
-        UserEntity user = AuthUtil.authorizedUser(req);
+    public ResponseEntity<Object> getCertificates(long student_id){
+        UserEntity user = userRepository.findById(student_id).orElse(null);
 
         if(user == null || user.getRole() != Role.STUDENT){
             return ResponseService.failed();
@@ -34,7 +37,7 @@ public class CertificateController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
-        response.put("certificates", certificateRepository.findAllCertificates(user.getId())
+        response.put("certificates", certificateRepository.findAllCertificates(student_id)
                 .stream()
                 .map(Certificate::new)
                 .toList());

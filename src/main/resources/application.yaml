@@ -1,0 +1,61 @@
+spring:
+  output:
+    ansi:
+      enabled: ALWAYS
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE}
+      max-request-size: ${MAX_FILE_SIZE}
+  application:
+    name: server
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    link-exam: ${LINK_EXAM}
+    link-recovery-password: ${LINK_RECOVERY_PASSWORD}
+    username: ${SERVER_GMAIL}
+    password: ${SERVER_GMAIL_PASSWORD}
+    properties:
+      mail:
+        debug: false
+        transport:
+          protocol: smtp
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${ACCESS_KEY_S3}
+      secret-key: ${SECRET_KEY_S3}
+    region:
+      static: us-east-2
+    stack:
+      auto: false
+
+application:
+  bucket:
+    name: ${BUCKET_S3}
+
+first-chief-teacher:
+  email: ${CHIEF_TEACHER_EMAIL}
+  password: ${CHIEF_TEACHER_PASSWORD}
+  first-name: ${CHIEF_TEACHER_FIRSTNAME}
+  last-name: ${CHIEF_TEACHER_LASTNAME}
+
+server:
+  port: ${SERVER_PORT:8080}

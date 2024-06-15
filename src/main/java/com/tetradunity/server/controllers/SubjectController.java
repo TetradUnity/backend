@@ -117,7 +117,7 @@ public class SubjectController {
                 String description;
                 subject.setDescription(description = subject.getDescription().trim());
                 int description_length = calculateTextLength(description);
-                if (description_length < 100) {
+                if (description_length < 50) {
                     return ResponseService.failed("small_size_description");
                 }
                 if (description_length > 2000) {
@@ -145,9 +145,10 @@ public class SubjectController {
 
             Random rand = new Random();
 
-            if (banner == null || storageService.downloadFile("banners/ " + banner) == null) {
+            if (banner == null) {
                 subject.setBanner("base" + rand.nextInt(1, 5) + ".jpg");
             } else {
+                System.out.println(storageService.downloadFile("banners/" + banner));
                 if (storageService.downloadFile("banners/" + banner) != null) {
                     subject.setBanner(banner);
                 } else {
@@ -384,7 +385,7 @@ public class SubjectController {
         UserEntity user = AuthUtil.authorizedUser(req);
 
 
-        if (request == null || request.isNull()) {
+        if (request == null) {
             return ResponseService.failed();
         }
 
@@ -403,7 +404,13 @@ public class SubjectController {
             return ResponseService.failed();
         }
 
-        String email = request.getEmail();
+        String email;
+        if(user == null){
+            email = request.getEmail();
+        }
+        else{
+            email = user.getEmail();
+        }
 
         if (resultExamRepository.existsByEmailAndSubjectId(email, subject_id)) {
             return ResponseService.failed("you_already_tried");
@@ -412,13 +419,12 @@ public class SubjectController {
         String first_name;
         String last_name;
 
-        user = user == null ? userRepository.findByEmail(email).orElse(null) : null;
+        user = user == null ? userRepository.findByEmail(email).orElse(null) : user;
 
         if (user != null) {
             if(user.getRole() != Role.STUDENT){
                 return ResponseService.failed("no_access");
             }
-
             first_name = user.getFirst_name();
             last_name = user.getLast_name();
         } else {
@@ -443,7 +449,9 @@ public class SubjectController {
             response.put("ok", true);
             return ResponseEntity.ok().body(response);
         }
-
+        else{
+            mailService.sendLinkToExam(email, first_name, last_name, uid, subject.getTitle());
+        }
 
         ResultExamEntity resultExamEntity = new ResultExamEntity(subject_id, email, first_name, last_name,
                 "[]", -1, 0, 0, uid, -1);
@@ -453,7 +461,6 @@ public class SubjectController {
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
 
-        mailService.sendLinkToExam(first_name, last_name, uid, subject.getTitle(), email);
 
         return ResponseEntity.ok().body(response);
     }

@@ -17,10 +17,6 @@ public class ExaminationRequest {
         this.last_name = last_name;
     }
 
-    public boolean isNull() {
-        return email == null || first_name == null || last_name == null || subject_id == 0;
-    }
-
     @Override
     public String toString() {
         return email + " " + subject_id;

@@ -18,7 +18,7 @@ public class Certificate {
     public Certificate(CertificateProjection projection){
         this(
                 projection.getTitle(),
-                projection.getType(),
+                CertificateType.valueOf(projection.getType()),
                 projection.getUid()
         );
     }

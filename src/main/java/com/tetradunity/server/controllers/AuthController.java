@@ -95,10 +95,6 @@ public class AuthController {
             String last_name = newUserInfo.getLast_name();
             Role role = newUserInfo.getRole();
 
-            if (role != Role.TEACHER && role != Role.STUDENT) {
-                ResponseService.failed();
-            }
-
             String validData = checkValidService.checkUser(email, password, first_name, last_name, true);
 
             if (!validData.equals("ok")) {

@@ -79,6 +79,7 @@ public class CertificateService {
         PDImageXObject image;
         Calendar currentTime = new GregorianCalendar();
         UserEntity student;
+        String title = subject.getTitle();
         for (long student_id : students_id) {
             grades = gradeRepository.getGradesForStudentAndSubject(student_id, subject_id);
             result = 0D;
@@ -94,7 +95,7 @@ public class CertificateService {
             if (student == null) {
                 continue;
             }
-            certificate = new CertificateEntity(student_id, subject_id, result);
+            certificate = new CertificateEntity(student_id, title, result);
             document = new PDDocument();
             page = new PDPage(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()));
             document.addPage(page);
@@ -107,11 +108,11 @@ public class CertificateService {
             font = PDType0Font.load(document, fontTextFile);
             textToCenter(contentStream, "Сертифікат за " + certificate.getType().getDescription(), font, 40, 310);
             textToCenter(contentStream, "під час навчання на курсі", font, 40, 270);
-            textToCenter(contentStream, "\"" + subject.getTitle() + "\"", font, 40, 230);
+            textToCenter(contentStream, "\"" + title + "\"", font, 40, 230);
             font = PDType0Font.load(document, fontItalicFile);
             contentStream.setFont(font, 15);
             contentStream.beginText();
-            String text_date = currentTime.get(Calendar.DAY_OF_MONTH) + "." + currentTime.get(Calendar.MONTH) + "." + currentTime.get(Calendar.YEAR);
+            String text_date = currentTime.get(Calendar.DAY_OF_MONTH) + "." + (currentTime.get(Calendar.MONTH) + 1) + "." + currentTime.get(Calendar.YEAR);
             contentStream.newLineAtOffset(310 - (font.getStringWidth(text_date) / 1000 * 15) / 2, 120);
             contentStream.showText(text_date);
             contentStream.endText();

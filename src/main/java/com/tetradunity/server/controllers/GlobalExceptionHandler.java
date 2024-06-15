@@ -1,5 +1,6 @@
 package com.tetradunity.server.controllers;
 
+import com.amazonaws.SdkClientException;
 import com.tetradunity.server.services.ResponseService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,11 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(SdkClientException.class)
+    public ResponseEntity<Object> handlerSdkClientException(SdkClientException e) {
+        return ResponseService.failed("[amazon_error]");
+    }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<Object> handlerMissingServletRequestParameterException(MissingServletRequestParameterException e) {

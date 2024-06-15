@@ -1,6 +1,7 @@
 package com.tetradunity.server.repositories;
 
 import com.tetradunity.server.entities.UserEntity;
+import com.tetradunity.server.projections.ShortInfoStudentProjection;
 import com.tetradunity.server.projections.StartSubjectRemind;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -49,9 +50,33 @@ public interface UserRepository extends CrudRepository<UserEntity, Long> {
 	List<StartSubjectRemind> findUserRemind();
 
 	@Query(value = """
+			SELECT u.*, COALESCE(AVG(g.value), 0) as average_grade FROM users u
+			JOIN student_subjects st ON u.id = st.student_id
+			LEFT JOIN grades g ON u.id = g.student_id
+			WHERE st.subject_id = :subject_id
+			GROUP BY u.id
+			ORDER BY average_grade
+			LIMIT 15 OFFSET :pos""", nativeQuery = true)
+	List<ShortInfoStudentProjection> findStudentBySubjectIdForTeacher(long subject_id, int pos);
+
+	@Query(value = """
 			SELECT u.* FROM users u
 			JOIN student_subjects st ON u.id = st.student_id
 			WHERE st.subject_id = :subject_id
+			ORDER BY u.last_name, u.first_name
+			LIMIT 15 OFFSET :pos""", nativeQuery = true)
+	List<UserEntity> findStudentBySubjectIdForStudent(long subject_id, int pos);
+
+	@Query(value = """
+			SELECT u.* FROM users u
+			JOIN student_subjects st ON u.id = st.student_id
+			WHERE st.subject_id = :subject_id
+			ORDER BY u.last_name, u.first_name""", nativeQuery = true)
+	List<UserEntity> findStudentBySubjectId(long subject_id);
+
+	@Query(value = """
+			SELECT COUNT(*) FROM student_subjects
+			WHERE subject_id = :subject_id
 			""", nativeQuery = true)
-	List<UserEntity> findBySubjectId(long subject_id);
+	Long countStudentInSubject(long subject_id);
 }

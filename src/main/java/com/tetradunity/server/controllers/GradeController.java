@@ -65,7 +65,7 @@ public class GradeController {
         long current_time = System.currentTimeMillis();
         long deadline = educationMaterial.getDeadline();
 
-        if(grade.getValue() == -1 && (deadline + 604_800_000 < current_time || deadline > current_time)){
+        if(grade.getContent().isEmpty() || (deadline + 604_800_000 < current_time || deadline > current_time)){
             return ResponseService.failed("no_permission");
         }
 
@@ -103,7 +103,7 @@ public class GradeController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("ok", true);
-        response.put("grades", gradeRepository.findBySubject(user.getId(), subject_id, pos)
+        response.put("grades", gradeRepository.findByStudentAndSubject(user.getId(), subject_id, pos)
                 .stream()
                 .map(Grade::new)
                 .toList());

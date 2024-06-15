@@ -18,7 +18,7 @@ public class GradeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    private double value = -1;
+    private double value = 0;
     private long student_id;
     private long subject_id;
     private long parent_id;

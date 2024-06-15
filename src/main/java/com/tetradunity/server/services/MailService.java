@@ -2,6 +2,7 @@ package com.tetradunity.server.services;
 
 import com.tetradunity.server.entities.UserEntity;
 import com.tetradunity.server.props.MailProperties;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -34,17 +35,21 @@ public class MailService {
         this.linkRecoveryPassword = linkRecoveryPassword;
     }
 
-    @SneakyThrows
-    public void sendLinkToExam(String first_name, String last_name, String uid, String subject_title, String email) {
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
-                false,
-                "UTF-8");
-        helper.setSubject("Link to exam");
-        helper.setTo(email);
-        String emailContent = getLetterStartExam(first_name, last_name, subject_title, linkExam + uid);
-        helper.setText(emailContent, true);
-        mailSender.send(mimeMessage);
+    public void sendLinkToExam(String email, String first_name, String last_name, String uid, String subject_title) {
+        new Thread(() -> {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = null;
+            try {
+                helper = new MimeMessageHelper(mimeMessage,
+                    false,
+                    "UTF-8");
+                helper.setSubject("Посилання на екзамен");
+                helper.setTo(email);
+                String emailContent = getLetterStartExam(first_name, last_name, subject_title, linkExam + uid);
+                helper.setText(emailContent, true);
+            } catch (MessagingException e) {}
+            mailSender.send(mimeMessage);
+        }).start();
     }
 
     @SneakyThrows
@@ -64,15 +69,22 @@ public class MailService {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @SneakyThrows
     public void sendExamComplete(String first_name, String last_name, String subject_title, String email) {
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
-                false,
-                "UTF-8");
-        helper.setSubject("Complete exam!");
-        helper.setTo(email);
-        String emailContent = getExamComplete(first_name, last_name, subject_title);
-        helper.setText(emailContent, true);
-        mailSender.send(mimeMessage);
+        new Thread(() -> {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = null;
+            try {
+                helper = new MimeMessageHelper(mimeMessage,
+                    false,
+                    "UTF-8");
+                helper.setSubject("Успішна здача екзамену");
+                helper.setTo(email);
+                String emailContent = getExamComplete(first_name, last_name, subject_title);
+                helper.setText(emailContent, true);
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
+            mailSender.send(mimeMessage);
+        }).start();
     }
 
     @SneakyThrows
@@ -91,15 +103,22 @@ public class MailService {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @SneakyThrows
     public void sendExamFail(String first_name, String last_name, String subject_title, String email) {
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
-                false,
-                "UTF-8");
-        helper.setSubject("Exam fail");
-        helper.setTo(email);
-        String emailContent = getExamFail(first_name, last_name, subject_title);
-        helper.setText(emailContent, true);
-        mailSender.send(mimeMessage);
+        new Thread(() -> {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = null;
+            try {
+                helper = new MimeMessageHelper(mimeMessage,
+                    false,
+                    "UTF-8");
+                helper.setSubject("Провал екзамену");
+                helper.setTo(email);
+                String emailContent = getExamFail(first_name, last_name, subject_title);
+                helper.setText(emailContent, true);
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
+            mailSender.send(mimeMessage);
+        }).start();
     }
 
     @SneakyThrows
@@ -118,15 +137,22 @@ public class MailService {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @SneakyThrows
     public void sendAuth(String first_name, String last_name, String subject_title, String password, String email) {
+        new Thread(() -> {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
-                false,
-                "UTF-8");
-        helper.setSubject("Authorization");
-        helper.setTo(email);
-        String emailContent = getAuth(first_name, last_name, subject_title, password);
-        helper.setText(emailContent, true);
-        mailSender.send(mimeMessage);
+            MimeMessageHelper helper = null;
+            try {
+                helper = new MimeMessageHelper(mimeMessage,
+                        false,
+                        "UTF-8");
+                helper.setTo(email);
+                String emailContent = getAuth(first_name, last_name, subject_title, password);
+                helper.setText(emailContent, true);
+                helper.setSubject("Авторизація");
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
+            mailSender.send(mimeMessage);
+        }).start();
     }
 
     @SneakyThrows
@@ -145,15 +171,22 @@ public class MailService {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @SneakyThrows
     public void sendRecoveryPassword(String email, String first_name, String uid) {
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
-                false,
-                "UTF-8");
-        helper.setSubject("Recovery password");
-        helper.setTo(email);
-        String emailContent = getRecoveryPassword(first_name, linkRecoveryPassword + uid);
-        helper.setText(emailContent, true);
-        mailSender.send(mimeMessage);
+        new Thread(() -> {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = null;
+            try {
+                helper = new MimeMessageHelper(mimeMessage,
+                    false,
+                    "UTF-8");
+                helper.setTo(email);
+                String emailContent = getRecoveryPassword(first_name, linkRecoveryPassword + uid);
+                helper.setText(emailContent, true);
+                helper.setSubject("Скидання пароля");
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
+            mailSender.send(mimeMessage);
+        }).start();
     }
 
     @SneakyThrows
@@ -170,15 +203,20 @@ public class MailService {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @SneakyThrows
     public void sendApplicationSubmitted(String email, String first_name, String last_name) {
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
-                false,
-                "UTF-8");
-        helper.setSubject("application submitted");
-        helper.setTo(email);
-        String emailContent = getApplicationSubmitted(first_name, last_name);
-        helper.setText(emailContent, true);
-        mailSender.send(mimeMessage);
+        new Thread(() -> {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = null;
+            try {
+                helper = new MimeMessageHelper(mimeMessage,
+                    false,
+                    "UTF-8");
+                helper.setSubject("Заявка прийнята");
+                helper.setTo(email);
+                String emailContent = getApplicationSubmitted(first_name, last_name);
+                helper.setText(emailContent, true);
+            } catch (MessagingException e) {}
+            mailSender.send(mimeMessage);
+        }).start();
     }
 
     @SneakyThrows
@@ -195,15 +233,23 @@ public class MailService {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @SneakyThrows
     public void sendStartSubjectRemind(String email, String first_name, String subject_title) {
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
-                false,
-                "UTF-8");
-        helper.setSubject("start subject");
-        helper.setTo(email);
-        String emailContent = getStartSubjectRemind(first_name, subject_title);
-        helper.setText(emailContent, true);
+        new Thread(() -> {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = null;
+            try {
+                helper = new MimeMessageHelper(mimeMessage,
+                    false,
+                    "UTF-8");
+                helper.setSubject("Предмет розпочато");
+                helper.setTo(email);
+                String emailContent = getStartSubjectRemind(first_name, subject_title);
+                helper.setText(emailContent, true);
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
         mailSender.send(mimeMessage);
+
+        }).start();
     }
 
     @SneakyThrows
@@ -220,15 +266,22 @@ public class MailService {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @SneakyThrows
     public void sendSubjectCanceled(String email, String first_name, String subject_title) {
+        new Thread(() -> {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
-                false,
-                "UTF-8");
-        helper.setSubject("canceled subject");
-        helper.setTo(email);
-        String emailContent = getSubjectCanceled(first_name, subject_title);
-        helper.setText(emailContent, true);
-        mailSender.send(mimeMessage);
+            MimeMessageHelper helper = null;
+            try {
+                helper = new MimeMessageHelper(mimeMessage,
+                        false,
+                        "UTF-8");
+                helper.setSubject("Відміна предмету");
+                helper.setTo(email);
+                String emailContent = getSubjectCanceled(first_name, subject_title);
+                helper.setText(emailContent, true);
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
+            mailSender.send(mimeMessage);
+        }).start();
     }
 
     @SneakyThrows
@@ -245,15 +298,22 @@ public class MailService {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @SneakyThrows
     public void sendConferenceRemind(String email, String subject_title) {
+        new Thread(() -> {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
-                false,
-                "UTF-8");
-        helper.setSubject("conference remind");
-        helper.setTo(email);
-        String emailContent = getConferenceRemind(subject_title);
-        helper.setText(emailContent, true);
+            MimeMessageHelper helper = null;
+            try {
+                helper = new MimeMessageHelper(mimeMessage,
+                        false,
+                        "UTF-8");
+                helper.setSubject("Незабаром конференція");
+                helper.setTo(email);
+                String emailContent = getConferenceRemind(subject_title);
+                helper.setText(emailContent, true);
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
         mailSender.send(mimeMessage);
+        }).start();
     }
 
     @SneakyThrows

@@ -130,33 +130,38 @@ public class UserController {
         String oldPassword = editedUser.getOldPassword();
         String avatar = editedUser.getAvatar();
 
-        String result;
-
+        String checkValid;
         if (password != null) {
             if (passwordEncoder.matches(oldPassword, user.getPassword())) {
-                if((result = checkValidService.checkPassword(password)).equals("ok")){
+                if((checkValid = checkValidService.checkPassword(password)).equals("ok")){
                     user.setPassword(passwordEncoder.encode(password));
                 }
                 else{
-                    return ResponseService.failed(result);
+                    return ResponseService.failed(checkValid);
                 }
             } else {
                 return ResponseService.failed("incorrect_password");
             }
         }
 
-        if ((result = checkValidService.checkEmail(email, true)).equals("ok")) {
-            user.setEmail(email);
-        }
-        else{
-            return ResponseService.failed(result);
+        if(email != null){
+            if ((checkValid = checkValidService.checkEmail(email, true)).equals("ok")) {
+                user.setEmail(email);
+            }
+            else{
+                return ResponseService.failed(checkValid);
+            }
         }
 
         first_name = first_name == null ? user.getFirst_name() : first_name;
         last_name = last_name == null ? user.getLast_name() : last_name;
 
-        if((result = checkValidService.checkName(first_name, last_name)).equals("ok")){
-            return ResponseService.failed(result);
+        if((checkValid = checkValidService.checkName(first_name, last_name)).equals("ok")){
+            user.setFirst_name(first_name);
+            user.setLast_name(last_name);
+        }
+        else{
+            return ResponseService.failed(checkValid);
         }
 
         if (avatar != null && !avatar.isBlank()) {

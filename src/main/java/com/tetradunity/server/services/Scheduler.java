@@ -35,7 +35,7 @@ public class Scheduler {
         passwordRecoveryRequestRepository.deleteByExpiryDateBefore();
         for(ConferenceRemindProjection projection : conferenceRepository.conferencesRemind()){
             for(String email : projection.getStudent_emails()){
-
+                mailService.sendConferenceRemind(email, projection.getSubject_title());
             }
         }
     }

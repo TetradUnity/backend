@@ -51,14 +51,14 @@ public interface ResultExamRepository extends JpaRepository<ResultExamEntity, Lo
     void deleteBySubjectId(long subject_id);
 
     @Query(value = """
-                SELECT AVG(value) FROM result_test
-                WHERE parent_id = :parent_id
+                SELECT AVG(result) FROM results_test
+                WHERE parent_id = :parent_id AND result <> -1
             """, nativeQuery = true)
     Double findAverageResult(long parent_id);
 
     @Query(value = """
-                SELECT COUNT(value) FROM result_test
-                WHERE parent_id = :parent_id
+                SELECT COUNT(*) FROM results_test
+                WHERE parent_id = :parent_id AND result <> -1
             """, nativeQuery = true)
     Long findCountCandidate(long parent_id);
 }

@@ -1,5 +1,6 @@
 package com.tetradunity.server.services;
 
+import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
@@ -46,15 +47,12 @@ public class StorageService {
         return fileName;
     }
 
-    public String uploadCertificate(File file, UUID uid) {
+    public void uploadCertificate(File file, UUID uid) {
         String fileName = "certificates/" + uid.toString() + ".pdf";
 
         try {
             s3Client.putObject(new PutObjectRequest(bucketName, fileName, file));
-        } catch (Exception e) {
-            return null;
-        }
-        return fileName;
+        } catch (Exception e) {}
     }
 
     public MultipartFile convertStringToMultipartFile(String content, String fileName) {
@@ -109,7 +107,9 @@ public class StorageService {
     }
 
     public void deleteFile(String fileName) {
-        s3Client.deleteObject(bucketName, fileName);
+        try{
+            s3Client.deleteObject(bucketName, fileName);
+        } catch (SdkClientException e) {}
     }
 
     public File convertMultiPartFileToFile(MultipartFile file) {

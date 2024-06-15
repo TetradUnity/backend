@@ -242,4 +242,28 @@ public class MailService {
                 .process(model, writer);
         return writer.toString();
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @SneakyThrows
+    public void sendConferenceRemind(String email, String subject_title) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,
+                false,
+                "UTF-8");
+        helper.setSubject("conference remind");
+        helper.setTo(email);
+        String emailContent = getConferenceRemind(subject_title);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getConferenceRemind(String subject_title) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("subject_title", subject_title);
+
+        StringWriter writer = new StringWriter();
+        configuration.getTemplate("letters/subjectCanceled.ftlh")
+                .process(model, writer);
+        return writer.toString();
+    }
 }

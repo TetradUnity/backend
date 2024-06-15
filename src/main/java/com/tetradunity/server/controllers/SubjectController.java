@@ -50,6 +50,8 @@ public class SubjectController {
     private GradeRepository gradeRepository;
     @Autowired
     private CheckValidService checkValidService;
+    @Autowired
+    private ConferenceRepository conferenceRepository;
 
     private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
@@ -144,12 +146,12 @@ public class SubjectController {
             Random rand = new Random();
 
             if (banner == null || storageService.downloadFile("banners/ " + banner) == null) {
-                subject.setBanner("banners/base" + rand.nextInt(1, 5));
+                subject.setBanner("base" + rand.nextInt(1, 5) + ".jpg");
             } else {
                 if (storageService.downloadFile("banners/" + banner) != null) {
                     subject.setBanner(banner);
                 } else {
-                    subject.setBanner("banners/base" + rand.nextInt(1, 5) + ".jpg");
+                    subject.setBanner("base" + rand.nextInt(1, 5) + ".jpg");
                 }
             }
             SubjectEntity subjectEntity = subjectRepository.save(new SubjectEntity(subject, teacher.getId()));
@@ -618,7 +620,7 @@ public class SubjectController {
     }
 
     @GetMapping("get-candidates")
-    public ResponseEntity<Object> getCandidates(HttpServletRequest req, @RequestParam long subjectId, int page) {
+    public ResponseEntity<Object> getCandidates(HttpServletRequest req, @RequestParam long subjectId, @RequestParam int page) {
 
         UserEntity user = AuthUtil.authorizedUser(req);
 
@@ -962,9 +964,9 @@ public class SubjectController {
 
         tagSubjectRepository.delete(subject_id);
         educationMaterialRepository.delete(subject_id);
-        tagSubjectRepository.delete(subject_id);
-        tagSubjectRepository.delete(subject_id);
-        tagSubjectRepository.delete(subject_id);
+        gradeRepository.delete(subject_id);
+        conferenceRepository.delete(subject_id);
+        studentSubjectRepository.delete(subject_id);
 
         subjectRepository.delete(subject);
 

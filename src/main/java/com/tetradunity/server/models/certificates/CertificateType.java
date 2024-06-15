@@ -2,7 +2,7 @@ package com.tetradunity.server.models.certificates;
 
 public enum CertificateType {
     PARTICIPATION("участь"),
-    GOOD_RESULTS("хороші результати"),
+    GOOD_RESULTS("гарні результати"),
     EXCELLENT_RESULTS("відмінні результати");
 
     private final String description;

@@ -384,25 +384,27 @@ public class SubjectController {
     public ResponseEntity<Object> createLinkExam(HttpServletRequest req, @RequestBody(required = false) ExaminationRequest request) {
         UserEntity user = AuthUtil.authorizedUser(req);
 
-
         if (request == null) {
             return ResponseService.failed();
         }
 
         long subject_id = request.getSubject_id();
 
+
+        System.out.println("arctg");
         SubjectEntity subject = subjectRepository.findById(subject_id).orElse(null);
 
         if (subject == null) {
             return ResponseService.failed();
         }
 
-
         int durationExam = JSONService.getTime(subject.getExam());
 
         if (subject.getTime_exam_end() < System.currentTimeMillis() + 10_800_000 + durationExam) {
             return ResponseService.failed();
         }
+
+        System.out.println("zzz");
 
         String email;
         if(user == null){
@@ -415,7 +417,7 @@ public class SubjectController {
         if (resultExamRepository.existsByEmailAndSubjectId(email, subject_id)) {
             return ResponseService.failed("you_already_tried");
         }
-
+        System.out.println("mihau");
         String first_name;
         String last_name;
 
@@ -436,6 +438,7 @@ public class SubjectController {
                 return ResponseService.failed(validData);
             }
         }
+        System.out.println("hello");
 
         String uid = UUID.randomUUID().toString();
 
@@ -495,7 +498,7 @@ public class SubjectController {
             Map<String, Object> response = new HashMap<>();
             response.put("exam", JSONService.getQuestions(exam, false));
             response.put("time_end", resultExam.getTime_end());
-            response.put("your-answer", resultExam.getAnswers());
+            response.put("your_answer", resultExam.getAnswers());
             response.put("ok", true);
             return ResponseEntity.ok().body(response);
         }
@@ -508,7 +511,13 @@ public class SubjectController {
             return ResponseService.failed("late");
         }
 
-        long end_time = current_time + duration;
+        long end_time;
+        if(duration == -1){
+            end_time = subject.getTime_exam_end();
+        }
+        else{
+             end_time = current_time + duration;
+        }
 
         if(end_time > exam_end){
             end_time = exam_end;

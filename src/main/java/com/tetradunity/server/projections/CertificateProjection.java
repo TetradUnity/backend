@@ -4,6 +4,6 @@ import com.tetradunity.server.models.certificates.CertificateType;
 
 public interface CertificateProjection {
     String getTitle();
-    CertificateType getType();
+    String getType();
     String getUid();
 }

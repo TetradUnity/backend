@@ -11,9 +11,8 @@ import java.util.UUID;
 
 public interface CertificateRepository extends CrudRepository<CertificateEntity, Long> {
     @Query(value = """
-                SELECT s.title, c.type, c.uid FROM certificates c
-                JOIN subjects s ON s.id = c.subject_id
-                WHERE c.student_id = :student_id
+                SELECT title, type, uid FROM certificates
+                WHERE student_id = :student_id
             """, nativeQuery = true)
     List<CertificateProjection> findAllCertificates(long student_id);
 

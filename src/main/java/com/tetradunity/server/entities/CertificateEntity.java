@@ -19,12 +19,13 @@ public class CertificateEntity {
     private UUID uid;
 
     private long student_id;
-    private long subject_id;
+    private String title;
+    @Enumerated(EnumType.STRING)
     private CertificateType type;
 
-    public CertificateEntity(long student_id, long subject_id, double result){
+    public CertificateEntity(long student_id, String title, double result){
         this.student_id = student_id;
-        this.subject_id = subject_id;
+        this.title = title;
         if(result < 65){
             this.type = CertificateType.PARTICIPATION;
         }

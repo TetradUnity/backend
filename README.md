@@ -43,7 +43,7 @@ TU Academy освітній сайт з можливістю
 ![img.png](img.png)
 
 для запуска проекта на windows виконайте команди у корневій директорії проекту
-mvn clean install
-mvn spring-boot:run
+mvnw clean install
+mvnw spring-boot:run
 
 Розробник: Максим Маньківський
